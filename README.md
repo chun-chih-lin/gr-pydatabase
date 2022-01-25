@@ -32,5 +32,5 @@ PONG
 2. Install redis-py
 ```
 $ apt-get install python-pip
-$ pip install redis
+$ python -m pip install redis
 ```
