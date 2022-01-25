@@ -4,14 +4,19 @@
 import redis as redis
 import utils
 
-r, db_ch = utils.redis_setup()
+r, subprefix = utils.redis_setup(db_host='localhost', db_port=6379, db_ch='channel_1', db_idx=0)
 
 def event_handler(msg):
+	print("msg:")
+	print(msg)
 	try:
-		key = msg["data"].decode("utf-8")
+		key = utils.utf8_decode(msg["data"])
 		if key:
-			# key = key.replace("valKey:", "")
-			value = r.get(key)
+			value = utils.utf8_decode(r.get(key))
+			print(key.split(":"))
+			print("value: ", value)
+			str_length = utils.utf8_len(value)
+			print("str_length: ", str_length)
 			process_message(value)
 	except Exception as exp:
 		pass
@@ -23,10 +28,7 @@ def process_message(value):
 
 def main():
 	pubsub = r.pubsub()
-	pubsub.psubscribe(**{'__keyevent@0__:*': event_handler})
-
-	print('Starting message loop')
-
+	pubsub.psubscribe(**{subprefix: event_handler})
 	pubsub.run_in_thread(sleep_time=0.01)
 	print("Running : worker redis subscriber ...")
 
