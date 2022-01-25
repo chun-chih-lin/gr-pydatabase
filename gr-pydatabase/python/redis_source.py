@@ -73,7 +73,7 @@ class redis_source(gr.sync_block):
             key = msg["data"].decode("utf-8")
             if key:
                 self.msg = self.redis_db.get(key).decode("utf-8")
-                print("pmt.intern(self.msg): ", pmt.intern(self.msg))
+                self.message_port_pub(pmt.string_to_symbol("pdu"), pmt.intern(self.msg))
         except Exception as exp:
             return
 
