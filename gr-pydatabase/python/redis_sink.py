@@ -54,7 +54,19 @@ class redis_sink(gr.sync_block):
             if meta is None:
                 meta = dict()
 
-            print("meta: \n", meta)
+            # print("meta: \n", meta)
+
+            vector = pmt.cdr(pdu)
+            payload = ""
+            if pmt.is_u8vector(vector):
+                vector = pmt.u8vector_elements(vector)
+                payload = "".join([chr(r) for r in vector[24:]])
+                self.set_to_db(payload)
+        pass
+
+    def set_to_db(self, payload):
+        print("Parsing the payload and set the information to db...")
+        print("payload: ", payload)
         pass
 
     def work(self, input_items, output_items):

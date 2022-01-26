@@ -1,0 +1,121 @@
+options:
+  parameters:
+    author: root
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: ''
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: redis_sink_test
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: Not titled yet
+    window_size: (1000,1000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: '32000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [208, 20.0]
+    rotation: 0
+    state: enabled
+- name: blocks_message_debug_0
+  id: blocks_message_debug
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [840, 96.0]
+    rotation: 0
+    state: true
+- name: blocks_random_pdu_0
+  id: blocks_random_pdu
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    length_modulo: '2'
+    mask: '0xFF'
+    maxoutbuf: '0'
+    maxsize: '100'
+    minoutbuf: '0'
+    minsize: '20'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [472, 220.0]
+    rotation: 0
+    state: true
+- name: pydatabase_redis_sink_0
+  id: pydatabase_redis_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    db_ch: channel_1
+    db_host: localhost
+    db_idx: '0'
+    db_port: '6379'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [840, 220.0]
+    rotation: 0
+    state: true
+- name: pydatabase_redis_source_0
+  id: pydatabase_redis_source
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    db_ch: channel_1
+    db_host: localhost
+    db_idx: '0'
+    db_port: '6379'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [136, 220.0]
+    rotation: 0
+    state: true
+
+connections:
+- [blocks_random_pdu_0, pdus, pydatabase_redis_sink_0, pdu]
+- [pydatabase_redis_source_0, pdu, blocks_random_pdu_0, generate]
+
+metadata:
+  file_format: 1
