@@ -41,6 +41,7 @@ class redis_source(gr.sync_block):
         self.db_host = db_host
         self.db_idx = db_idx
         self.msg = ""
+        self.subprefix = f'__keyspace@{self.db_idx}__'
 
         # Connect to database
         self.redis_db = redis.Redis(host=self.db_host, port=self.db_port, db=self.db_idx)
@@ -64,19 +65,20 @@ class redis_source(gr.sync_block):
     def run_subscribe(self):
         self.pubsub = self.redis_db.pubsub()
         # TODO: change listening channel depends on input setting.
-        self.pubsub.psubscribe(**{'__keyevent@0__:*': self.event_handler})
+        self.pubsub.psubscribe(**{self.subprefix+":Trans:*": self.event_handler})
         self.redis_thread = self.pubsub.run_in_thread(sleep_time=0.01)
 
     def event_handler(self, msg):
         self.msg = ""
         try:
-            key = msg["data"].decode("utf-8")
-            if key:
-                self.msg = self.redis_db.get(key).decode("utf-8")
+            key = msg["channel"].decode("utf-8")
+            split_key = key.split(":")
+            db_key = ":".join([i for i in split_key[1:]])
+            if db_key:
+                self.msg = self.redis_db.get(db_key).decode("utf-8")
                 self.message_port_pub(pmt.string_to_symbol("pdu"), pmt.intern(self.msg))
         except Exception as exp:
             return
-
 
     def work(self, input_items, output_items):
         return False

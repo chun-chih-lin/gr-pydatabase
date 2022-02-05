@@ -3,34 +3,37 @@
 
 import redis as redis
 import utils
+import time
 
 r, subprefix = utils.redis_setup(db_host='localhost', db_port=6379, db_ch='channel_1', db_idx=0)
-
+start_time = time.time()
 def event_handler(msg):
-	print("msg:")
-	print(msg)
 	try:
-		key = utils.utf8_decode(msg["data"])
-		if key:
-			value = utils.utf8_decode(r.get(key))
-			print(key.split(":"))
-			print("value: ", value)
+		key = utils.utf8_decode(msg["channel"])
+		split_key = key.split(":")
+		db_key = ":".join([i for i in split_key[1:]])
+		if db_key:
+			value = utils.utf8_decode(r.get(db_key))
 			str_length = utils.utf8_len(value)
-			print("str_length: ", str_length)
 			process_message(value)
+			if int(value) == 0:
+				start_time = time.time()
+			elif int(value) == 9999:
+				print("Total time: ", time.time()-start_time)
 	except Exception as exp:
 		pass
 	pass
 
 def process_message(value):
-    # Insert your code below
-    print("Processing Message : ", value)
+	# Insert your code below
+	r.set("Recv:" + str(value), value)
 
 def main():
 	pubsub = r.pubsub()
+	# print("subprefix: ", subprefix)
 	pubsub.psubscribe(**{subprefix: event_handler})
 	pubsub.run_in_thread(sleep_time=0.01)
-	print("Running : worker redis subscriber ...")
+	# print("Running : worker redis subscriber ...")
 
 if __name__ == '__main__':
 	main()
