@@ -182,7 +182,7 @@ class redis_sink(gr.sync_block):
     def set_to_db(self, payload):
         # print("[gr-pydatabase] Parsing the payload and set the information to db...")
         # print("[gr-pydatabase] payload: ", payload)
-        self.redis_db.set("Recv:" + time.time(), payload)
+        self.redis_db.set("Recv:" + str(time.time()), payload)
         pass
 
     def work(self, input_items, output_items):

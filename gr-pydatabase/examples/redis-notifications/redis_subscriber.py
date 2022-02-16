@@ -4,6 +4,7 @@
 import redis as redis
 import utils
 import time
+import json
 
 r, subprefix = utils.redis_setup(db_host='localhost', db_port=6379, db_ch='channel_1', db_idx=0)
 start_time = time.time()
@@ -16,24 +17,20 @@ def event_handler(msg):
 			value = utils.utf8_decode(r.get(db_key))
 			str_length = utils.utf8_len(value)
 			process_message(value)
-			if int(value) == 0:
-				start_time = time.time()
-			elif int(value) == 9999:
-				print("Total time: ", time.time()-start_time)
 	except Exception as exp:
 		pass
 	pass
 
 def process_message(value):
-	# Insert your code below
-	r.set("Recv:" + str(value), value)
+	MSPD = json.loads(value)
+	r.set("Recv:" + MSPD["idx"], MSPD["data"])
 
 def main():
 	pubsub = r.pubsub()
-	# print("subprefix: ", subprefix)
+	print("subprefix: ", subprefix)
 	pubsub.psubscribe(**{subprefix: event_handler})
 	pubsub.run_in_thread(sleep_time=0.01)
-	# print("Running : worker redis subscriber ...")
+	print("Running : worker redis subscriber ...\n=========================================")
 
 if __name__ == '__main__':
 	main()
