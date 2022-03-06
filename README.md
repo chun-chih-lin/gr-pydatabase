@@ -34,3 +34,31 @@ PONG
 $ apt-get install python-pip
 $ python -m pip install redis
 ```
+
+
+## hiredis for C Language
+1. Clone hiredis
+```
+$ git clone https://github.com/redis/hiredis.git
+```
+2. Install library
+```
+$ sudo apt-get install -y libhiredis-dev
+```
+3. Create directory tree
+```
+$ mkdir /usr/local/include/hiredis
+```
+4. Copy following 5 files from repo to the directory location
+```
+$ cp /hiredis/alloc.h /usr/local/include/hiredis
+$ cp /hiredis/saync.h /usr/local/include/hiredis
+$ cp /hiredis/hiredis.h /usr/local/include/hiredis
+$ cp /hiredis/read.h /usr/local/include/hiredis
+$ cp /hiredis/sds.h /usr/local/include/hiredis
+```
+5. #include "hiredis/hiredis.h" file in your .c files.
+6. Compile .c file with -lhiredis
+```
+$ gcc -o c-redis c-redis.c -lhiredis
+```
