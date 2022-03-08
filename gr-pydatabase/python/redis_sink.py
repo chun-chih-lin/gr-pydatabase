@@ -43,6 +43,7 @@ class redis_sink(gr.sync_block):
         self.db_idx = db_idx
 
         self.redis_db = redis.Redis(host=self.db_host, port=self.db_port, db=self.db_idx)
+        self.pipeline = self.redis_db.pipeline()
 
         self.message_port_register_in(pmt.string_to_symbol("pdu"))
         self.set_msg_handler(pmt.string_to_symbol("pdu"), self.parse_pdu_into_db)
@@ -154,6 +155,7 @@ class redis_sink(gr.sync_block):
                 1: "S1G Beacon",
             }
             return switcher.get(subtype, "Reserved")
+
         # Check if pdu is PDU
         # print("[gr-pydatabase] Check if pdu is PDU...")
         if pmt.is_pair(pdu):
@@ -165,24 +167,32 @@ class redis_sink(gr.sync_block):
             vector = pmt.cdr(pdu)
             pmt_vector = pmt.to_python(vector)
             payload = ""
+
             if pmt.is_u8vector(vector):
                 vector = pmt.u8vector_elements(vector)
                 payload = "".join([chr(r) for r in vector[24:]])
-                # print("[gr-pydatabase] payload: ", payload)
+
+                ### header_info: for future used as indication for the receiver and transmitter
                 header_info = parse_header(pmt_vector)
-                # print("[gr-pydatabase] header_info: ", header_info)
-                # self.parse_header(vector)
-                self.set_to_db(payload)
+
+                real_csi = meta['csi'].real.tolist()
+                imag_csi = meta['csi'].imag.tolist()
+                meta.pop('csi', None)
+                meta['real'] = real_csi
+                meta['imag'] = imag_csi
+                info_json = json.dumps(meta)
+                self.set_to_db(payload, info_json)
+        self.pipeline.execute()
         pass
 
     def get_info_from_vector(self, pmt_vector, start_pos, length):
         data = "".join([chr(r) for r in pmt_vector[start_pos:start_pos+length]])
         return data
 
-    def set_to_db(self, payload):
+    def set_to_db(self, payload, info_json):
         # print("[gr-pydatabase] Parsing the payload and set the information to db...")
-        # print("[gr-pydatabase] payload: ", payload)
-        self.redis_db.set("Recv:" + str(time.time()), payload)
+        seq = json.loads(payload)['sequence']
+        self.pipeline.hmset(f'Recv:{seq}:{str(time.time())}', {'payload': payload, 'info': info_json})
         pass
 
     def work(self, input_items, output_items):
