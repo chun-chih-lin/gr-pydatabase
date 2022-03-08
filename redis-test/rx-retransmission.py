@@ -4,8 +4,11 @@ import time
 import json
 import random
 
-r, subprefix = utils.redis_setup(sub_pattern='FROMTX')
+r, subprefix = utils.redis_setup(sub_pattern='SIM_CHANNEL')
 start_time = time.time()
+
+src = "10.10.0.2"
+dst = "10.10.0.1"
 
 def event_handler(msg):
 	try:
@@ -20,25 +23,37 @@ def event_handler(msg):
 	pass
 
 def process_message(value):
-	MSPD = json.loads(value)
-	rx_or_not = random.uniform(0, 1)
-	print(f'rx_or_not: {rx_or_not}')
-	if rx_or_not < 0.95:	
-		print('Receive a packet.')
-		time.sleep(0.02*random.uniform(0, 1))
-		r.set("FROMRX:" + MSPD["idx"], "ACK")
+	print("---")
+	# When receive any signal, do:
+	# 	First, determine if the packet is for itself.
+	# 	Second, if the packet needs an ACK.
+	MSDU = json.loads(value)
+	print(f'MSDU: {type(MSDU)}\n')
+	print(MSDU)
+	if MSDU['dst'] == src:
+		# It is for itself
+		# Simulate the packet loss rate.
+		if random.uniform(0, 1) < 0.99:
+			MSDU['src'] = src
+			MSDU['dst'] = dst
+			MSDU['data'] = "ACK"
+			print('Receive a packet.')
+			send_data = json.dumps(MSDU, separators=(',', ':'))
+			r.set("SIM_CHANNEL:CH8", send_data)
+			time.sleep(0.000001)
+			r.delete("SIM_CHANNEL:CH8")
+
+		else:
+			print('Packet loss...')
 	else:
-		print('Packet loss.')
+		# It is for others. Ignore the packet.
+		print(f'Receive a packet, but it is not for me.\n\tSource: {MSDU["src"]}\n\tDestination: {MSDU["dst"]}')
 
 def main():
 	pubsub = r.pubsub()
 	print(f'subprefix: {subprefix}')
 	pubsub.psubscribe(**{subprefix: event_handler})
 	pubsub.run_in_thread(sleep_time=0.01)
-
-	rx_or_not = random.uniform(0, 1)
-	print(f'rx_or_not: {rx_or_not}')
-
 	print("Running : worker redis subscriber ...\n=========================================")
 
 if __name__ == '__main__':
