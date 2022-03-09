@@ -24,12 +24,13 @@ def event_handler(msg):
 
 def process_message(db_key):
 	# On receiving the "RECEPTION" key
-	# 1. Erase the "Recv:*" for the current trigger.
-	# 2. RPOP one element from the QUEUE:LIST:TRANS
+	# RPOP one element from the QUEUE:LIST:TRANS
 	# Once the element is pop from the queueing list,
 	# it should trigger the queueing agent to fire another
 	# member to be transmitted
-	
+	p = r.pipeline()
+	p.rpop('WUEUE:LIST:TRANS')
+	p.execute()
 	pass
 
 def main():

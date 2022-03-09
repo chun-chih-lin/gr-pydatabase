@@ -18,7 +18,6 @@ or adding the above line to ~/.bashrc file, so the setting is automatically load
 
 # Database
 ## Redis Database
-
 1. Install redis-cli
 ```
 $ apt install redis-server
@@ -35,6 +34,10 @@ $ apt-get install python-pip
 $ python -m pip install redis
 ```
 
+## Python Scapy
+```
+$ pip install --pre scapy[basic]
+```
 
 ## hiredis for C Language
 1. Clone hiredis
@@ -61,4 +64,18 @@ $ cp /hiredis/sds.h /usr/local/include/hiredis
 6. Compile .c file with -lhiredis
 ```
 $ gcc -o c-redis c-redis.c -lhiredis
+```
+
+## Custom Modification of Denpendency Package
+1. Modify gr-ieee802-11
+In file './lib/parse_mac.cc' line 69, add following condition so the receiver can successfully receive ACK frame.
+```
+if (((h -> frame_control >> 2) & 3) == 1 && (((h->frame_control) >> 4) & 0xf) == 13) {
+	// The ACK frame only has length of 10.
+	dout << "ACK frame" << std::endl;
+} else if (frame_len < 20) {
+	dout << "frame too short to parse (<20)" << std::endl;
+	return;
+}
+
 ```

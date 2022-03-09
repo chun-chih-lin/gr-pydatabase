@@ -12,34 +12,40 @@ MSDU_MAX = 10
 RETRY_MAX = 5
 WAIT_MAX = 0.001
 
-r, subprefix = utils.redis_setup(sub_pattern='TRANSMISSION')
+r, _ = utils.redis_setup()
 start_time = time.time()
 
 def event_handler(msg):
 	try:
 		# key should be 'TRANSMISSION'
 		key = utils.utf8_decode(msg["channel"])
+		print(f'key: {key}')
 		if key:
 			# get the db_key for transmission information
 			db_key = utils.utf8_decode(r.get("TRANSMISSION"))
+			if db_key == "Quit":
+				thread.stop()
 			process_message(db_key)
 	except Exception as exp:
 		print(f'Exception occurs: {exp}')
 		pass
 	pass
 
-def check_rf_state():
-	if utils.utf8_decode(r.get("RFDEVICE:STATE")) == "Busy":
+def check_rf_state(state):
+	if utils.utf8_decode(r.get("RFDEVICE:STATE")) == state:
 		pass
 	else:
-		r.set("RFDEVICE:STATE", "Busy")
+		r.set("RFDEVICE:STATE", state)
 
 def process_message(db_key):
-	check_rf_state()
+	check_rf_state(state="Busy")
 	db_value = utils.utf8_decode(r.get(db_key))
 
 	# Trigger RF front-end to transmit the data
-	r.set(f'Trans:{db_key}', db_value)
+	p = r.pipeline()
+	p.set(f'Trans:{db_key}', db_value)
+	p.sadd('WAITACK', db_key)
+	p.execute()
 
 	# Monitor the key and retransmit if needed
 	monitor_key(db_key=db_key)
@@ -69,6 +75,7 @@ def monitor_key(db_key):
 			p = r.pipeline()
 			p.delete(f'Trans:{db_key}')
 			p.set(f'Trans:{db_key}', db_value)
+			p.sadd('WAITACK', db_key)
 			p.execute()
 		pass
 	pass
@@ -77,16 +84,18 @@ def monitor_key(db_key):
 	p = r.pipeline()
 	p.set("RECEPTION", db_key)
 	p.set(key_ack, "Failed")
+	p.srem('WAITACK', db_key)
 	p.set("RFDEVICE:STATE", "Idle")
 	p.execute()
 
 def main():
+	db_idx = 0
 	# Subscribe the 'TRANSMISSION' pattern
 	pubsub = r.pubsub()
+	subprefix = f'__keyspace@{db_idx}__:TRANSMISSION'
 	pubsub.psubscribe(**{subprefix: event_handler})
-	pubsub.run_in_thread(sleep_time=0.01)
+	thread = pubsub.run_in_thread(sleep_time=0.01)
 	print("Running : worker redis subscriber ...\n=========================================")
-	pass
 
 if __name__ == '__main__':
 	main()
