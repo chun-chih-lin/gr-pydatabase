@@ -1,51 +1,103 @@
+import numpy as np
 import redis as redis
+import utils
 import time
 import json
-import utils
+import random
+import string
 
-r, _ = utils.redis_setup()
+class QueueAgent(object):
+	"""docstring for QueueAgent"""
+	def __init__(self, subprefix, agentkey):
+		super(QueueAgent, self).__init__()
+		print('Initialing QueueAgent...')
+		self.db_host = 'localhost'
+		self.db_port = 6379
+		self.db_idx = 0
+		self.subprefix = subprefix
+		self.agentkey = agentkey
 
-def event_handler(msg):
-	try:
-		# key should be 'LISTTEST'
-		key = utils.utf8_decode(msg["channel"])
-		if key:
-			# get the db_key for transmission information
-			# db_key = key.split(":")[1]
-			db_key = "QUEUE:LIST:TRANS"
-			process_message(db_key)
-	except Exception as exp:
-		print(f'Exception occurs: {exp}')
+		self.db = redis.Redis(host=self.db_host, port=self.db_port, db=self.db_idx)
+		self.subpattern = f'__keyspace@{self.db_idx}__:{self.subprefix}'
+		self.agentpattern = f'__keyspace@{self.db_idx}__:{self.agentkey}'
+
+		self.check_notify()
+
+		self.pubsub = self.db.pubsub()
+		self.pubsub.psubscribe(**{self.subpattern: self.event_handler})
+		self.pubsub.psubscribe(**{self.agentpattern: self.agent_event_handler})
+		self.thread = self.pubsub.run_in_thread(sleep_time=0.01)
+
+		self.RETRY_MAX = 5
+		self.WAIT_MAX = 0.001
+		self.REDEVICE_STATE = "RFDEVICE:STATE"
+
+		self.KEYWORD_QUIT = "Quit"
+		self.KEYWORD_BUSY = "Busy"
+		self.KEYWORD_IDLE = "Idle"
+		self.KEYWORD_STOP = "Stop"
+		self.KEYWORD_WAIT_ACK = "WAITACK"
+		self.KEYWORD_TRANS = "TRANSMISSION"
+		print('Initialization done.')
+
+	def check_notify(self):
+		self.db.config_set('notify-keyspace-events', 'KEA')
 		pass
-	pass
 
-def process_message(db_key):
-	while r.exists(db_key):
-		rf_device_state = utils.utf8_decode(r.get("RFDEVICE:STATE"))
-		if rf_device_state == "Idle":
-			# There are some keys in the queue and the RF is Idle.
-			oldest_key = utils.utf8_decode(r.lrange(db_key, -1, -1)[0])
-			
-			# Trigger the Transmission Agent to transmit
-			# Set the state of RF as Busy
-			p = r.pipeline()
-			p.set("TRANSMISSION", oldest_key)
-			p.set("RFDEVICE:STATE", "Busy")
-			p.execute()
-		else:
-			print('Still processing, sleep for 1 second.')
-			time.sleep(1)
+	def utf8_decode(self, msg):
+		return msg.decode("utf-8")
+
+	def agent_event_handler(self, msg):
+		try:
+			key = self.utf8_decode(msg["channel"])
+			if key:
+				db_key = self.utf8_decode(self.db.get(self.agentkey))
+				if db_key == self.KEYWORD_QUIT:
+					print('Quiting QueueAgent. See you again.')
+					self.db.set('AGENT:QUEUE', self.KEYWORD_STOP)
+					self.thread.stop()
+		except Exception as exp:
+			print(f'Exception occurs: {exp}')
 		pass
-	pass
+
+	def event_handler(self, msg):
+		try:
+			# key should be 'LISTTEST'
+			key = self.utf8_decode(msg["channel"])
+			if key:
+				# get the db_key for transmission information
+				# db_key = key.split(":")[1]
+				db_key = "QUEUE:LIST:TRANS"
+				self.process_message(db_key)
+		except Exception as exp:
+			print(f'Exception occurs: {exp}')
+			pass
+		pass
+
+	def process_message(self, db_key):
+		while self.db.exists(db_key):
+			# While "QUEUE:LIST:TRANS" exist, means there is message needs to be transmitted
+			rf_device_state = self.utf8_decode(self.db.get(self.REDEVICE_STATE))
+			if rf_device_state == self.KEYWORD_IDLE:
+				# There are some keys in the queue and the RF is Idle.
+				oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
+				
+				# Trigger the Transmission Agent to transmit
+				# Set the state of RF as Busy
+				p = self.db.pipeline()
+				# Tell the transmission agent which key to be transmitted
+				p.set(self.KEYWORD_TRANS, oldest_key)
+				# Set rf device to Busy
+				p.set(self.REDEVICE_STATE, self.KEYWORD_BUSY)
+				p.execute()
+			else:
+				print('Still processing, sleep for 1 second.')
+				time.sleep(1)
+			pass
+		pass
 
 def main():
-	db_idx = 0
-	# Subscribe the 'LISTTEST' pattern
-	pubsub = r.pubsub()
-	subprefix = f'__keyspace@{db_idx}__:QUEUE:LIST:TRANS'
-	pubsub.psubscribe(**{subprefix: event_handler})
-	pubsub.run_in_thread(sleep_time=0.01)
-	print("Running : worker redis subscriber ...\n=========================================")
+	QueueAgent('QUEUE:LIST:TRANS', 'AGENT:QUEUE')
 	pass
 
 if __name__ == '__main__':

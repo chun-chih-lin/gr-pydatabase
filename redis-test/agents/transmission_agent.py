@@ -8,30 +8,38 @@ import string
 
 class TransAgent(object):
 	"""docstring for TransAgent"""
-	def __init__(self, subprefix):
+	def __init__(self, subprefix, agentkey):
 		super(TransAgent, self).__init__()
 		print('Initialing TransAgent...')
 		self.db_host = 'localhost'
 		self.db_port = 6379
 		self.db_idx = 0
 		self.subprefix = subprefix
+		self.agentkey = agentkey
 
 		self.db = redis.Redis(host=self.db_host, port=self.db_port, db=self.db_idx)
 		self.subpattern = f'__keyspace@{self.db_idx}__:{self.subprefix}'
+		self.agentpattern = f'__keyspace@{self.db_idx}__:{self.agentkey}'
 
 		self.check_notify()
 
 		self.pubsub = self.db.pubsub()
 		self.pubsub.psubscribe(**{self.subpattern: self.event_handler})
+		self.pubsub.psubscribe(**{self.agentpattern: self.agent_event_handler})
 		self.thread = self.pubsub.run_in_thread(sleep_time=0.01)
 
 		self.RETRY_MAX = 5
 		self.WAIT_MAX = 0.001
 		self.REDEVICE_STATE = "RFDEVICE:STATE"
+		self.MONITOR_ACK = "TRANS:ACK"
+		self.ACK_STATE_WAIT = "Waiting"
+		self.ACK_STATE_FAIL = "Failed"
+		self.ACK_STATE_SUCC = "Success"
 
 		self.KEYWORD_QUIT = "Quit"
 		self.KEYWORD_BUSY = "Busy"
 		self.KEYWORD_IDLE = "Idle"
+		self.KEYWORD_STOP = "Stop"
 		self.KEYWORD_WAIT_ACK = "WAITACK"
 		print('Initialization done.')
 
@@ -48,6 +56,19 @@ class TransAgent(object):
 		else:
 			self.db.set(self.REDEVICE_STATE, state)
 
+	def agent_event_handler(self, msg):
+		try:
+			key = self.utf8_decode(msg["channel"])
+			if key:
+				db_key = self.utf8_decode(self.db.get(self.agentkey))
+				if db_key == self.KEYWORD_QUIT:
+					print('Quiting TransAgent. See you again.')
+					self.db.set('AGENT:TRANS', self.KEYWORD_STOP)
+					self.thread.stop()
+		except Exception as exp:
+			print(f'Exception occurs: {exp}')
+		pass
+
 	def event_handler(self, msg):
 		try:
 			# key should be 'TRANSMISSION'
@@ -55,11 +76,7 @@ class TransAgent(object):
 			if key:
 				# get the db_key for transmission information
 				db_key = self.utf8_decode(self.db.get(self.subprefix))
-				if db_key == self.KEYWORD_QUIT:
-					print('Quiting TransAgent. See you again.')
-					self.thread.stop()
-				else:
-					self.process_message(db_key)
+				self.process_message(db_key)
 		except Exception as exp:
 			print(f'Exception occurs: {exp}')
 			pass
@@ -67,13 +84,15 @@ class TransAgent(object):
 
 	def process_message(self, db_key):
 		self.check_rf_state(state=self.KEYWORD_BUSY)
-		db_value = self.utf8_decode(self.db.get(db_key))
+		PMDU_msg = self.utf8_decode(self.db.get(db_key))
 
 		# Trigger RF front-end to transmit the data
 		# Add the key into waiting ACK list.
 		p = self.db.pipeline()
-		p.set(f'Trans:{db_key}', db_value)
-		p.sadd(self.KEYWORD_WAIT_ACK, db_key)
+		# Trigger the RF front-end to transmit
+		p.set(f'Trans:{db_key}', PMDU_msg)
+		# p.sadd(self.KEYWORD_WAIT_ACK, db_key)
+		p.set(self.MONITOR_ACK, self.ACK_STATE_WAIT)
 		p.execute()
 
 		# Monitor the key and retransmit if needed
@@ -88,7 +107,7 @@ class TransAgent(object):
 		waiting_interval = 0.0001
 
 		while retry_count < self.RETRY_MAX:
-			if self.db.exists(key_ack):
+			if self.db.get(self.MONITOR_ACK).decode("utf-8") != self.ACK_STATE_WAIT:
 				# It must receive the ACK
 				return
 			elif waiting_time <= self.WAIT_MAX:
@@ -102,22 +121,27 @@ class TransAgent(object):
 				p = self.db.pipeline()
 				p.delete(f'Trans:{db_key}')
 				p.set(f'Trans:{db_key}', db_value)
-				p.sadd(self.KEYWORD_WAIT_ACK, db_key)
+				# p.sadd(self.KEYWORD_WAIT_ACK, db_key)
 				p.execute()
 			pass
 		pass
 		# Outside the while indicates the retry max is researched.
 		# Report Failed
+		self.abort_monitor(db_key, key_ack)
+	
+	def abort_monitor(self, db_key, key_ack):
 		p = self.db.pipeline()
 		p.set("RECEPTION", db_key)
 		p.set(key_ack, "Failed")
-		p.srem(self.KEYWORD_WAIT_ACK, db_key)
+		# p.srem(self.KEYWORD_WAIT_ACK, db_key)
 		p.set(self.REDEVICE_STATE, self.KEYWORD_IDLE)
+		p.set(self.MONITOR_ACK, self.ACK_STATE_FAIL)
 		p.execute()
+		pass
 
 def main():
 	print('Running Transmission Agent...')
-	TransAgent('TRANSMISSION')
+	TransAgent('TRANSMISSION', 'AGENT:TRANS')
 	pass
 
 if __name__ == '__main__':

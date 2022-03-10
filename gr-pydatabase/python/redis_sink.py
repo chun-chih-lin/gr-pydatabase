@@ -24,6 +24,9 @@ import pmt
 import json
 import time
 
+import socket
+import scapy.all as scapy
+
 import numpy
 from gnuradio import gr
 
@@ -31,7 +34,7 @@ class redis_sink(gr.sync_block):
     """
     doc string for block redis_sink
     """
-    def __init__(self, db_ch, db_port, db_host, db_idx):
+    def __init__(self, db_ch, db_port, db_host, db_idx, macaddr):
         gr.sync_block.__init__(self,
             name="redis_sink",
             in_sig=None,
@@ -45,10 +48,32 @@ class redis_sink(gr.sync_block):
         self.redis_db = redis.Redis(host=self.db_host, port=self.db_port, db=self.db_idx)
         self.pipeline = self.redis_db.pipeline()
 
+        self.macaddr = macaddr or self.redis_db.get("SELF:MACADDR").decode("utf-8")
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        self.FRMAE_MGMT = 0
+        self.FRMAE_CTRL = 1
+        self.FRMAE_DATA = 2
+
+        self.MONITOR_ACK = "TRANS:ACK"
+        self.ACK_STATE_WAIT = "Waiting"
+        self.ACK_STATE_FAIL = "Failed"
+        self.ACK_STATE_SUCC = "Success"
+        self.REDEVICE_STATE = "RFDEVICE:STATE"
+        self.KEYWORD_QUIT = "Quit"
+        self.KEYWORD_BUSY = "Busy"
+        self.KEYWORD_IDLE = "Idle"
+        self.KEYWORD_STOP = "Stop"
+        self.KEYWORD_WAIT_ACK = "WAITACK"
+        self.QUEUE_NAME = "QUEUE:LIST:TRANS"
+
         self.message_port_register_in(pmt.string_to_symbol("pdu"))
         self.set_msg_handler(pmt.string_to_symbol("pdu"), self.parse_pdu_into_db)
 
     def parse_pdu_into_db(self, pdu):
+        def check_dest(addr):
+            # print(f'{self.macaddr}, {addr}')
+            return self.macaddr == addr
         def get_type(frame_type, frame_subtype):
             if frame_type == 0:
                 frame_type_str = "Management"
@@ -66,29 +91,31 @@ class redis_sink(gr.sync_block):
         def parse_header(header_vector):
             hex_list = [hex(i) for i in header_vector]
 
-            frame_ctrl = "0x" + str(header_vector[0]) + str(header_vector[1])
+            frame_ctrl = str(hex_list[0])
             frame_ctrl_bin = format(int(frame_ctrl, 16), "08b")
 
-            frame_subtype = int(frame_ctrl_bin[4:], 2)
-            frame_type = int(frame_ctrl_bin[:2], 2)
-            version = int(frame_ctrl_bin[2:4], 2)
+            frame_subtype = int(frame_ctrl_bin[:4], 2)
+            frame_type = int(frame_ctrl_bin[5:6], 2)
+            version = int(frame_ctrl_bin[7:], 2)
+
             frame_type_str = get_type(frame_type, frame_subtype)
             duration = int(header_vector[2] + header_vector[3])
-            addr1 = ":".join([i.lstrip("0x") for i in hex_list[4:10]])
-            addr2 = ":".join([i.lstrip("0x") for i in hex_list[10:16]])
-            addr3 = ":".join([i.lstrip("0x") for i in hex_list[16:22]])
+
+            addr1 = ":".join(["{:02x}".format(int(i, 16)) for i in hex_list[4:10]])
+            addr2 = ":".join(["{:02x}".format(int(i, 16)) for i in hex_list[10:16]])
+            addr3 = ":".join(["{:02x}".format(int(i, 16)) for i in hex_list[16:22]])
 
             header_dict = dict()
-            header_dict["frame_subtype"] = frame_subtype
-            header_dict["frame_type"] = frame_type
+            header_dict["subtype"] = frame_subtype
+            header_dict["type"] = frame_type
             header_dict["version"] = version
             header_dict["duration"] = duration
-            header_dict["addr1"] = addr1
-            header_dict["addr2"] = addr2
-            header_dict["addr3"] = addr3
+            header_dict["addr1"] = addr1        # Receiver
+            header_dict["addr2"] = addr2        # Sender
+            header_dict["addr3"] = addr3        # Filtering
 
-            header_json = json.dumps(header_dict)
-            return header_json
+            # header_json = json.dumps(header_dict)
+            return check_dest(addr1), header_dict, frame_type_str
         def get_subtype_mgmt(subtype):
             switcher = {
                 0: "Association Request",
@@ -173,21 +200,46 @@ class redis_sink(gr.sync_block):
                 payload = "".join([chr(r) for r in vector[24:]])
 
                 ### header_info: for future used as indication for the receiver and transmitter
-                header_info = parse_header(pmt_vector)
-
-                real_csi = meta['csi'].real.tolist()
-                imag_csi = meta['csi'].imag.tolist()
-                meta.pop('csi', None)
-                meta['real'] = real_csi
-                meta['imag'] = imag_csi
-                info_json = json.dumps(meta)
-                self.set_to_db(payload, info_json)
+                is_for_me, header_info, frame_type = parse_header(pmt_vector)
+                if is_for_me:
+                    real_csi = meta['csi'].real.tolist()
+                    imag_csi = meta['csi'].imag.tolist()
+                    meta.pop('csi', None)
+                    meta['real'] = real_csi
+                    meta['imag'] = imag_csi
+                    info_json = json.dumps(meta)
+                    if header_info['type'] == self.FRMAE_DATA:
+                        # Only write the data to db if it is a DATA frame
+                        self.reply_with_ack(header_info['addr2'])
+                        self.set_to_db(payload, info_json)
+                    else:
+                        print(f'It is a {frame_type} frame.')
+                        if header_info['type'] == self.FRMAE_CTRL and header_info['subtype'] == 13:
+                            self.action_to_ack()
+                else:
+                    # The destination is not me. Discard the received pkt.
+                    # print('header_info:\n', header_info)
+                    print(f'It is not for me. Send to {header_info["addr1"]}, I\'m {self.macaddr}')
+                    pass
         self.pipeline.execute()
         pass
+
+    def action_to_ack(self):
+        p = self.db.pipeline()
+        p.set(self.MONITOR_ACK, self.ACK_STATE_SUCC)
+        p.set(self.REDEVICE_STATE, self.KEYWORD_IDLE)
+        p.rpop(self.QUEUE_NAME)
+        p.execute()
 
     def get_info_from_vector(self, pmt_vector, start_pos, length):
         data = "".join([chr(r) for r in pmt_vector[start_pos:start_pos+length]])
         return data
+
+    def reply_with_ack(self, addr):
+        print(f'Receive a DATA frame. Reply with ACK to address: {addr}')
+        ack_frame = scapy.Dot11FCS(addr1=addr, type=1, subtype=13, FCfield=0)
+        self.sock.sendto(bytes(ack_frame), ("127.0.0.1", 52001))
+        pass
 
     def set_to_db(self, payload, info_json):
         # print("[gr-pydatabase] Parsing the payload and set the information to db...")
