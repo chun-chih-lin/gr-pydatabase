@@ -1,0 +1,346 @@
+options:
+  parameters:
+    author: root
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: ''
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: loopback
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: loopback
+    window_size: (1000,1000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: blocks_message_debug_0
+  id: blocks_message_debug
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [728, 472.0]
+    rotation: 0
+    state: disabled
+- name: blocks_pdu_to_tagged_stream_0
+  id: blocks_pdu_to_tagged_stream
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    tag: packet_len
+    type: complex
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [272, 588.0]
+    rotation: 0
+    state: true
+- name: blocks_socket_pdu_0
+  id: blocks_socket_pdu
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    host: 127.0.0.1
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mtu: '10000'
+    port: '52001'
+    tcp_no_delay: 'False'
+    type: UDP_SERVER
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [288, 92.0]
+    rotation: 180
+    state: disabled
+- name: blocks_socket_pdu_0_0
+  id: blocks_socket_pdu
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    host: 127.0.0.1
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mtu: '10000'
+    port: '52001'
+    tcp_no_delay: 'False'
+    type: UDP_SERVER
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [728, 364.0]
+    rotation: 180
+    state: true
+- name: foo_channel_model_0
+  id: foo_channel_model
+  parameters:
+    affinity: ''
+    alias: ''
+    block_tags: 'False'
+    comment: ''
+    epsilon: '1.0'
+    freq_offset: '0.0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    noise_voltage: '0.0794328'
+    seed: '0'
+    taps: '1.0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [424, 460.0]
+    rotation: 0
+    state: true
+- name: foo_packet_pad2_0
+  id: foo_packet_pad2
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    debug: 'False'
+    delay: 'False'
+    delay_sec: '0.001'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    pad_front: '500'
+    pad_tail: '500'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [248, 460.0]
+    rotation: 0
+    state: true
+- name: ieee802_11_mac_0
+  id: ieee802_11_mac
+  parameters:
+    affinity: ''
+    alias: ''
+    bss_mac: '[0xff, 0xff, 0xff, 0xff, 0xff, 0xff]'
+    comment: ''
+    dst_mac: '[0x42, 0x42, 0x42, 0x42, 0x42, 0x42]'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    src_mac: '[0x23, 0x23, 0x23, 0x23, 0x23, 0x23]'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [288, 212.0]
+    rotation: 0
+    state: disabled
+- name: ieee802_11_parse_mac_0
+  id: ieee802_11_parse_mac
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    debug: 'True'
+    log: 'False'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [64, 396.0]
+    rotation: 180
+    state: enabled
+- name: note_0
+  id: note
+  parameters:
+    alias: ''
+    comment: "To use this grc.\n1. Run the grc.\n2. Use python script which launch\
+      \ a socket object listen to\n     port 52001 with ip 127.0.0.1.\n3. Whenever\
+      \ the python script sendto a MESSAGE to the ip\n     with the port, it will\
+      \ trigger this grc to transmit the desired\n     MESSAGE.\n\nA template python\
+      \ script is shown as follow:\n--- Python ---\nimport socket\n\nMESSAGE = \"\
+      Hello, from python!\\n\"\n\nsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n\
+      sock.sendto(MESSAGE.encode(), (\"127.0.0.1\", 52001))\n--- EOF ---"
+    note: README.md
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [544, 20.0]
+    rotation: 0
+    state: true
+- name: note_0_0
+  id: note
+  parameters:
+    alias: ''
+    comment: "To run with scapy in python.\n1. install scapy in the system\n\t~$ pip\
+      \ install --pre scapy[basic]\n2. import scapy packet in the python.\n--- python\
+      \ ---\nimport socket\nimport scapy.all as scapy\n\nframe = scapy.Ether(dst=\"\
+      ff:..\")\\\n\t/scapy.IP(dst=[\"gnuradio.org\", \"libvolk.org\", ttl=(1,9)])\\\
+      \n\t/scapy.UDP(sport=12345, dport=52001)/\"Hello World!\"\nlist(frame)[0].show()\n\
+      \nsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\nsock.sendto(byte(frame),\
+      \ (\"127.0.0.1\", 52001))\n\n--- EOF ---\n\n\nRefer:\nhttps://archive.fosdem.org/2019/schedule/event/gr_scapy/attachments/slides/3366/export/events/attachments/gr_scapy/slides/3366/gnuradio_meets_scapy.pdf"
+    note: README.md
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [920, 20.0]
+    rotation: 0
+    state: true
+- name: qtgui_const_sink_x_0
+  id: qtgui_const_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    axislabels: 'True'
+    color1: '"blue"'
+    color10: '"red"'
+    color2: '"red"'
+    color3: '"red"'
+    color4: '"red"'
+    color5: '"red"'
+    color6: '"red"'
+    color7: '"red"'
+    color8: '"red"'
+    color9: '"red"'
+    comment: ''
+    grid: 'False'
+    gui_hint: ''
+    label1: ''
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    legend: 'True'
+    marker1: '0'
+    marker10: '0'
+    marker2: '0'
+    marker3: '0'
+    marker4: '0'
+    marker5: '0'
+    marker6: '0'
+    marker7: '0'
+    marker8: '0'
+    marker9: '0'
+    name: '""'
+    nconnections: '1'
+    size: '480'
+    style1: '0'
+    style10: '0'
+    style2: '0'
+    style3: '0'
+    style4: '0'
+    style5: '0'
+    style6: '0'
+    style7: '0'
+    style8: '0'
+    style9: '0'
+    tr_chan: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_slope: qtgui.TRIG_SLOPE_POS
+    tr_tag: '""'
+    type: complex
+    update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    xmax: '2'
+    xmin: '-2'
+    ymax: '2'
+    ymin: '-2'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [504, 580.0]
+    rotation: 0
+    state: true
+- name: wifi_phy_hier_0
+  id: wifi_phy_hier
+  parameters:
+    affinity: ''
+    alias: ''
+    bandwidth: 10e6
+    chan_est: ieee802_11.LS
+    comment: ''
+    encoding: ieee802_11.BPSK_1_2
+    frequency: 5.89e9
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    sensitivity: '0.56'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [336, 340.0]
+    rotation: 180
+    state: true
+
+connections:
+- [blocks_pdu_to_tagged_stream_0, '0', qtgui_const_sink_x_0, '0']
+- [blocks_socket_pdu_0, pdus, ieee802_11_mac_0, app in]
+- [blocks_socket_pdu_0_0, pdus, blocks_message_debug_0, print_pdu]
+- [blocks_socket_pdu_0_0, pdus, wifi_phy_hier_0, mac_in]
+- [foo_channel_model_0, '0', wifi_phy_hier_0, '0']
+- [foo_packet_pad2_0, '0', foo_channel_model_0, '0']
+- [ieee802_11_mac_0, phy out, blocks_message_debug_0, print_pdu]
+- [ieee802_11_mac_0, phy out, wifi_phy_hier_0, mac_in]
+- [wifi_phy_hier_0, '0', foo_packet_pad2_0, '0']
+- [wifi_phy_hier_0, carrier, blocks_pdu_to_tagged_stream_0, pdus]
+- [wifi_phy_hier_0, mac_out, ieee802_11_parse_mac_0, in]
+
+metadata:
+  file_format: 1
