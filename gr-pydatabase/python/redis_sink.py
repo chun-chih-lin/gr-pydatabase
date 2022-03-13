@@ -95,8 +95,8 @@ class redis_sink(gr.sync_block):
             frame_ctrl_bin = format(int(frame_ctrl, 16), "08b")
 
             frame_subtype = int(frame_ctrl_bin[:4], 2)
-            frame_type = int(frame_ctrl_bin[5:6], 2)
-            version = int(frame_ctrl_bin[7:], 2)
+            frame_type = int(frame_ctrl_bin[4:6], 2)
+            version = int(frame_ctrl_bin[6:], 2)
 
             frame_type_str = get_type(frame_type, frame_subtype)
             duration = int(header_vector[2] + header_vector[3])
@@ -201,19 +201,22 @@ class redis_sink(gr.sync_block):
 
                 ### header_info: for future used as indication for the receiver and transmitter
                 is_for_me, header_info, frame_type = parse_header(pmt_vector)
+                print(f'Receive a type: {header_info["type"]} frame')
                 if is_for_me:
-                    real_csi = meta['csi'].real.tolist()
-                    imag_csi = meta['csi'].imag.tolist()
-                    meta.pop('csi', None)
-                    meta['real'] = real_csi
-                    meta['imag'] = imag_csi
-                    info_json = json.dumps(meta)
                     if header_info['type'] == self.FRMAE_DATA:
+                        real_csi = meta['csi'].real.tolist()
+                        imag_csi = meta['csi'].imag.tolist()
+                        meta.pop('csi', None)
+                        meta['real'] = real_csi
+                        meta['imag'] = imag_csi
+                        info_json = json.dumps(meta)
+                        print(f'It is for me. header_info["type"]: {header_info["type"]}')
+                        print(f'It is for me. header_info["subtype"]: {header_info["subtype"]}')
                         # Only write the data to db if it is a DATA frame
+                        print(f'Receive a DATA frame')
                         self.reply_with_ack(header_info['addr2'])
                         self.set_to_db(payload, info_json)
                     else:
-                        print(f'It is a {frame_type} frame.')
                         if header_info['type'] == self.FRMAE_CTRL and header_info['subtype'] == 13:
                             self.action_to_ack()
                 else:
@@ -222,29 +225,42 @@ class redis_sink(gr.sync_block):
                     print(f'It is not for me. Send to {header_info["addr1"]}, I\'m {self.macaddr}')
                     pass
         self.pipeline.execute()
+        self.pipeline.reset()
         pass
 
     def action_to_ack(self):
-        p = self.db.pipeline()
-        p.set(self.MONITOR_ACK, self.ACK_STATE_SUCC)
-        p.set(self.REDEVICE_STATE, self.KEYWORD_IDLE)
-        p.rpop(self.QUEUE_NAME)
-        p.execute()
+        ACK_status = self.redis_db.get(self.MONITOR_ACK)
+        print(f'[Redis_sink] ACK Status: {ACK_status.decode("utf-8")}')
+        if ACK_status.decode('utf-8') == self.ACK_STATE_WAIT:
+            print('[Redis_sink] Receive ACK.')
+            p = self.redis_db.pipeline()
+            p.set(self.MONITOR_ACK, self.ACK_STATE_SUCC)
+            p.set(self.REDEVICE_STATE, self.KEYWORD_IDLE)
+            p.rpop(self.QUEUE_NAME)
+            p.execute()
+            p.reset()
+            print('[Redis_sink] RPOP. Can start the next msg...')
+        else:
+            print('[Redis_sink] Receive redundent ACK...')
 
     def get_info_from_vector(self, pmt_vector, start_pos, length):
         data = "".join([chr(r) for r in pmt_vector[start_pos:start_pos+length]])
         return data
 
     def reply_with_ack(self, addr):
-        print(f'Receive a DATA frame. Reply with ACK to address: {addr}')
+        print(f'[Redis_sink] Receive a DATA frame. Reply with ACK to address: {addr}')
         ack_frame = scapy.Dot11FCS(addr1=addr, type=1, subtype=13, FCfield=0)
         self.sock.sendto(bytes(ack_frame), ("127.0.0.1", 52001))
         pass
 
     def set_to_db(self, payload, info_json):
         # print("[gr-pydatabase] Parsing the payload and set the information to db...")
-        seq = json.loads(payload)['sequence']
-        self.pipeline.hmset(f'Recv:{seq}:{str(time.time())}', {'payload': payload, 'info': info_json})
+        try:
+            seq = json.loads(payload)['sequence']
+            self.pipeline.hmset(f'Recv:{seq}:{str(time.time())}', {'payload': payload, 'info': info_json})
+        except Exception as exp:
+            print(f'[Redis_sink] Exception: set_to_db {exp}')
+            print(f'[Redis_sink] Exception: payload:\n', payload, '\ninfo:\n', info_json)
         pass
 
     def work(self, input_items, output_items):
