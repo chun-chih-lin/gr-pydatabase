@@ -26,11 +26,11 @@ class QueueAgent(object):
 		self.pubsub = self.db.pubsub()
 		self.pubsub.psubscribe(**{self.subpattern: self.event_handler})
 		self.pubsub.psubscribe(**{self.agentpattern: self.agent_event_handler})
-		self.thread = self.pubsub.run_in_thread(sleep_time=0.01)
+		self.thread = self.pubsub.run_in_thread(sleep_time=0.001)
 
 		self.RETRY_MAX = 5
 		self.WAIT_MAX = 0.001
-		self.REDEVICE_STATE = "RFDEVICE:STATE"
+		self.RFDEVICE_STATE = "RFDEVICE:STATE"
 
 		self.KEYWORD_QUIT = "Quit"
 		self.KEYWORD_BUSY = "Busy"
@@ -57,12 +57,13 @@ class QueueAgent(object):
 					self.db.set('AGENT:QUEUE', self.KEYWORD_STOP)
 					self.thread.stop()
 		except Exception as exp:
-			print(f'Exception occurs: {exp}')
+			print(f'[Queue] Exception occurs: {exp}')
 		pass
 
 	def event_handler(self, msg):
 		try:
 			# key should be 'LISTTEST'
+			print(f'[Queue] msg: {msg["channel"]}')
 			key = self.utf8_decode(msg["channel"])
 			if key:
 				# get the db_key for transmission information
@@ -70,14 +71,15 @@ class QueueAgent(object):
 				db_key = "QUEUE:LIST:TRANS"
 				self.process_message(db_key)
 		except Exception as exp:
-			print(f'Exception occurs: {exp}')
+			print(f'[Queue] Exception occurs: {exp}')
 			pass
 		pass
 
 	def process_message(self, db_key):
 		while self.db.exists(db_key):
 			# While "QUEUE:LIST:TRANS" exist, means there is message needs to be transmitted
-			rf_device_state = self.utf8_decode(self.db.get(self.REDEVICE_STATE))
+			print(f'[Queue] {self.db.get(self.RFDEVICE_STATE)}')
+			rf_device_state = self.utf8_decode(self.db.get(self.RFDEVICE_STATE))
 			if rf_device_state == self.KEYWORD_IDLE:
 				# There are some keys in the queue and the RF is Idle.
 				oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
@@ -88,13 +90,14 @@ class QueueAgent(object):
 				# Tell the transmission agent which key to be transmitted
 				p.set(self.KEYWORD_TRANS, oldest_key)
 				# Set rf device to Busy
-				p.set(self.REDEVICE_STATE, self.KEYWORD_BUSY)
+				p.set(self.RFDEVICE_STATE, self.KEYWORD_BUSY)
 				p.execute()
 			else:
 				print('Still processing, sleep for 1 second.')
 				time.sleep(1)
 			pass
 		pass
+		print('Done processing all the msg in queue')
 
 def main():
 	QueueAgent('QUEUE:LIST:TRANS', 'AGENT:QUEUE')

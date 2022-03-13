@@ -26,10 +26,10 @@ class TransAgent(object):
 		self.pubsub = self.db.pubsub()
 		self.pubsub.psubscribe(**{self.subpattern: self.event_handler})
 		self.pubsub.psubscribe(**{self.agentpattern: self.agent_event_handler})
-		self.thread = self.pubsub.run_in_thread(sleep_time=0.01)
+		self.thread = self.pubsub.run_in_thread(sleep_time=0.001)
 
 		self.RETRY_MAX = 5
-		self.WAIT_MAX = 0.001
+		self.WAIT_MAX = 0.01
 		self.REDEVICE_STATE = "RFDEVICE:STATE"
 		self.MONITOR_ACK = "TRANS:ACK"
 		self.ACK_STATE_WAIT = "Waiting"
@@ -41,6 +41,7 @@ class TransAgent(object):
 		self.KEYWORD_IDLE = "Idle"
 		self.KEYWORD_STOP = "Stop"
 		self.KEYWORD_WAIT_ACK = "WAITACK"
+		
 		print('Initialization done.')
 
 	def check_notify(self):
@@ -66,7 +67,7 @@ class TransAgent(object):
 					self.db.set('AGENT:TRANS', self.KEYWORD_STOP)
 					self.thread.stop()
 		except Exception as exp:
-			print(f'Exception occurs: {exp}')
+			print(f'[Trans] Exception occurs: {exp}')
 		pass
 
 	def event_handler(self, msg):
@@ -78,7 +79,7 @@ class TransAgent(object):
 				db_key = self.utf8_decode(self.db.get(self.subprefix))
 				self.process_message(db_key)
 		except Exception as exp:
-			print(f'Exception occurs: {exp}')
+			print(f'[Trans] Exception occurs: {exp}')
 			pass
 		pass
 
@@ -96,31 +97,35 @@ class TransAgent(object):
 		p.execute()
 
 		# Monitor the key and retransmit if needed
-		self.monitor_key(db_key=db_key)
+		self.monitor_key(db_key=db_key, PMDU_msg=PMDU_msg)
 		pass
 
-	def monitor_key(self, db_key):
+	def monitor_key(self, db_key, PMDU_msg):
+		print(f'[Trans Agent] Start monitoring...')
 		key_ack = f'{db_key}:ACK'
 
 		retry_count = 0
 		waiting_time = 0.0
-		waiting_interval = 0.0001
+		waiting_interval = 0.001
 
 		while retry_count < self.RETRY_MAX:
 			if self.db.get(self.MONITOR_ACK).decode("utf-8") != self.ACK_STATE_WAIT:
+				print(f'[Trans Agent] {self.db.get(self.MONITOR_ACK).decode("utf-8")}')
 				# It must receive the ACK
 				return
 			elif waiting_time <= self.WAIT_MAX:
+				print(f'[Trans Agent] {self.db.get(self.MONITOR_ACK).decode("utf-    8")}, {waiting_time} < {self.WAIT_MAX}, not timeout.')
 				# Haven't received the ACK yet, and not timeout yet.
 				time.sleep(waiting_interval)
 				waiting_time += waiting_interval
 			else:
 				# Haven't received the ACK and timeout occurs.
+				print(f'[Trans Agent] Timeout. Retry [{retry_count+1}/{self.RETRY_MAX}]')
 				retry_count += 1
 				waiting_time = 0.0
 				p = self.db.pipeline()
 				p.delete(f'Trans:{db_key}')
-				p.set(f'Trans:{db_key}', db_value)
+				p.set(f'Trans:{db_key}', PMDU_msg)
 				# p.sadd(self.KEYWORD_WAIT_ACK, db_key)
 				p.execute()
 			pass
@@ -130,12 +135,14 @@ class TransAgent(object):
 		self.abort_monitor(db_key, key_ack)
 	
 	def abort_monitor(self, db_key, key_ack):
+		print(f'[Trans Agent] ACK status: {self.db.get(self.MONITOR_ACK).decode("utf-8")}, Abort monitoring...')
 		p = self.db.pipeline()
 		p.set("RECEPTION", db_key)
 		p.set(key_ack, "Failed")
 		# p.srem(self.KEYWORD_WAIT_ACK, db_key)
 		p.set(self.REDEVICE_STATE, self.KEYWORD_IDLE)
 		p.set(self.MONITOR_ACK, self.ACK_STATE_FAIL)
+		p.rpop('QUEUE:LIST:TRANS')
 		p.execute()
 		pass
 
