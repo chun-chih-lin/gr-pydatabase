@@ -32,7 +32,10 @@ endif()
 GR_PYTHON_INSTALL(
     FILES
     __init__.py
-    DESTINATION ${GR_PYTHON_DIR}/pydatabase
+    redis_subscriber.py
+    redis_source.py
+    redis_sink.py
+    mac.py DESTINATION ${GR_PYTHON_DIR}/pydatabase
 )
 
 ########################################################################
@@ -42,3 +45,7 @@ include(GrTest)
 
 set(GR_TEST_TARGET_DEPS gnuradio-pydatabase)
 set(GR_TEST_PYTHON_DIRS ${CMAKE_BINARY_DIR}/swig)
+GR_ADD_TEST(qa_redis_subscriber ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_subscriber.py)
+GR_ADD_TEST(qa_redis_source ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_source.py)
+GR_ADD_TEST(qa_redis_sink ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_sink.py)
+GR_ADD_TEST(qa_mac ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_mac.py)

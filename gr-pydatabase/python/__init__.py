@@ -39,4 +39,8 @@ except module_not_found_error:
     pass
 
 # import any pure python here
+from .redis_subscriber import redis_subscriber
+from .redis_source import redis_source
+from .redis_sink import redis_sink
+from .mac import mac
 #

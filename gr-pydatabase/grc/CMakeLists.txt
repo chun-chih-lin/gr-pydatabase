@@ -19,5 +19,8 @@
 # Boston, MA 02110-1301, USA.
 
 install(FILES
-    DESTINATION share/gnuradio/grc/blocks
+    pydatabase_redis_subscriber.block.yml
+    pydatabase_redis_source.block.yml
+    pydatabase_redis_sink.block.yml
+    pydatabase_mac.block.yml DESTINATION share/gnuradio/grc/blocks
 )
