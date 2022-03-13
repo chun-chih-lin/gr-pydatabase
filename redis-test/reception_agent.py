@@ -29,7 +29,7 @@ def process_message(db_key):
 	# it should trigger the queueing agent to fire another
 	# member to be transmitted
 	p = r.pipeline()
-	p.rpop('WUEUE:LIST:TRANS')
+	p.rpop('QUEUE:LIST:TRANS')
 	p.execute()
 	pass
 

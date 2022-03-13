@@ -4,7 +4,7 @@ category: '[pydatabase]'
 
 templates:
   imports: import pydatabase
-  make: pydatabase.redis_sink(${db_ch}, ${db_port}, ${db_host}, ${db_idx})
+  make: pydatabase.redis_sink(${db_ch}, ${db_port}, ${db_host}, ${db_idx}, ${macaddr})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
@@ -28,6 +28,10 @@ parameters:
   label: DB Host
   dtype: string
   default: "localhost"
+- id: macaddr
+  label: MAC Address
+  dtype: string
+  default: "00:00:00:00:00:00"
 
 #  Make one 'inputs' list entry per input and one 'outputs' list entry per output.
 #  Keys include:

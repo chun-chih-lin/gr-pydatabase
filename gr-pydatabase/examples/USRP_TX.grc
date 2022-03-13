@@ -259,19 +259,6 @@ blocks:
     coordinate: [928, 12.0]
     rotation: 0
     state: enabled
-- name: blocks_message_debug_0
-  id: blocks_message_debug
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [496, 128.0]
-    rotation: 0
-    state: disabled
 - name: blocks_multiply_const_vxx_0
   id: blocks_multiply_const_vxx
   parameters:
@@ -307,7 +294,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [696, 132.0]
+    coordinate: [976, 420.0]
     rotation: 180
     state: enabled
 - name: blocks_vector_source_x_0
@@ -384,7 +371,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [216, 204.0]
+    coordinate: [456, 204.0]
     rotation: 0
     state: true
 - name: uhd_usrp_sink_0
@@ -687,11 +674,10 @@ blocks:
 
 connections:
 - [blocks_multiply_const_vxx_0, '0', foo_packet_pad2_0, '0']
-- [blocks_socket_pdu_0, pdus, ieee802_11_mac_0, app in]
+- [blocks_socket_pdu_0, pdus, wifi_phy_hier_0, mac_in]
 - [blocks_vector_source_x_0, '0', wifi_phy_hier_0, '0']
 - [foo_packet_pad2_0, '0', uhd_usrp_sink_0, '0']
 - [ieee802_11_mac_0, phy out, wifi_phy_hier_0, mac_in]
-- [pydatabase_redis_source_0, pdu, blocks_message_debug_0, print]
 - [pydatabase_redis_source_0, pdu, ieee802_11_mac_0, app in]
 - [wifi_phy_hier_0, '0', blocks_multiply_const_vxx_0, '0']
 

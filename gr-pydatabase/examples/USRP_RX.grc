@@ -123,27 +123,6 @@ blocks:
     coordinate: [616, 12.0]
     rotation: 0
     state: enabled
-- name: gain_db
-  id: variable_qtgui_range
-  parameters:
-    comment: ''
-    gui_hint: ''
-    label: ''
-    min_len: '200'
-    orient: Qt.Horizontal
-    rangeType: float
-    start: '0'
-    step: '1'
-    stop: '65'
-    value: '30'
-    widget: counter_slider
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [976, 12.0]
-    rotation: 0
-    state: disabled
 - name: gain_nor
   id: variable_qtgui_range
   parameters:
@@ -234,7 +213,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1200, 12.0]
+    coordinate: [1080, 12.0]
     rotation: 0
     state: enabled
 - name: window_size
@@ -246,7 +225,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1096, 12.0]
+    coordinate: [976, 12.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_mag_0
@@ -370,19 +349,6 @@ blocks:
     coordinate: [1128, 500.0]
     rotation: 0
     state: disabled
-- name: blocks_message_debug_0
-  id: blocks_message_debug
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1304, 392.0]
-    rotation: 0
-    state: enabled
 - name: blocks_moving_average_xx_0
   id: blocks_moving_average_xx
   parameters:
@@ -494,7 +460,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [200, 436.0]
+    coordinate: [200, 420.0]
     rotation: 0
     state: enabled
 - name: foo_wireshark_connector_0
@@ -548,26 +514,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [440, 436.0]
+    coordinate: [432, 420.0]
     rotation: 0
     state: enabled
-- name: ieee802_11_parse_mac_0
-  id: ieee802_11_parse_mac
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    debug: 'True'
-    log: 'True'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [952, 428.0]
-    rotation: 0
-    state: disabled
 - name: ieee802_11_sync_long_0
   id: ieee802_11_sync_long
   parameters:
@@ -1105,7 +1054,6 @@ connections:
 - [fft_vxx_0, '0', ieee802_11_frame_equalizer_0, '0']
 - [foo_wireshark_connector_0, '0', blocks_file_sink_0, '0']
 - [ieee802_11_decode_mac_0, out, foo_wireshark_connector_0, in]
-- [ieee802_11_decode_mac_0, out, ieee802_11_parse_mac_0, in]
 - [ieee802_11_decode_mac_0, out, pydatabase_redis_sink_0, pdu]
 - [ieee802_11_frame_equalizer_0, '0', ieee802_11_decode_mac_0, '0']
 - [ieee802_11_frame_equalizer_0, symbols, blocks_pdu_to_tagged_stream_1, pdus]
