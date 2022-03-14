@@ -12,9 +12,17 @@ import sys
 Loop_MAX = 1000
 # The maximum MSDU is 1500 bytes before encryption.
 MSDU_MAX = 100
-ID = sys.argv[1] or "a"
 
-sleep_bw_pkt = float(sys.argv[2]) or 0.01
+ID = 'a'
+sleep_bw_pkt = 0.001
+
+
+if len(sys.argv) == 2:
+	ID = sys.argv[1]
+elif len(sys.argv) == 3:
+	leep_bw_pkt = float(sys.argv[2])
+
+print(f'Throughput test with sequence name: {ID}, interval: {sleep_bw_pkt}')
 
 r, subprefix = utils.redis_setup(db_host='localhost', db_port=6379, db_ch='channel_1', db_idx=0)
 

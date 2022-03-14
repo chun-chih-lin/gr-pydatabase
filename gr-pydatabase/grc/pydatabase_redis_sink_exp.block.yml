@@ -1,10 +1,10 @@
-id: pydatabase_mac
-label: WiFi MAC
+id: pydatabase_redis_sink_exp
+label: Redis Sink Experiment
 category: '[pydatabase]'
 
 templates:
   imports: import pydatabase
-  make: pydatabase.mac(${src_mac}, ${dst_mac}, ${bss_mac})
+  make: pydatabase.redis_sink_exp(${db_ch}, ${db_port}, ${db_host}, ${db_idx}, ${macaddr})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
@@ -12,18 +12,26 @@ templates:
 #     * label (label shown in the GUI)
 #     * dtype (e.g. int, float, complex, byte, short, xxx_vector, ...)
 parameters:
-- id: src_mac
-  label: SRC MAC
-  dtype: int_vector
-  default: '[0x42, 0x42, 0x42, 0x42, 0x42, 0x42]'
-- id: dst_mac
-  label: DST MAC
-  dtype: int_vector
-  default: '[0x42, 0x42, 0x42, 0x42, 0x42, 0x42]'
-- id: bss_mac
-  label: BSS MAC
-  dtype: int_vector
-  default: '[0xff, 0xff, 0xff, 0xff, 0xff, 0xff]'
+- id: db_ch
+  label: DB Channel
+  dtype: string
+  default: "channel_1"
+- id: db_port
+  label: DB Port
+  dtype: int
+  default: 6379
+- id: db_idx
+  label: DB index
+  dtype: int
+  default: 0
+- id: db_host
+  label: DB Host
+  dtype: string
+  default: "localhost"
+- id: macaddr
+  label: MAC Address
+  dtype: string
+  default: "00:00:00:00:00:00"
 
 #  Make one 'inputs' list entry per input and one 'outputs' list entry per output.
 #  Keys include:
@@ -33,20 +41,10 @@ parameters:
 #      * vlen (optional - data stream vector length. Default is 1)
 #      * optional (optional - set to 1 for optional inputs. Default is 0)
 inputs:
-- label: app in
+- label: pdu
   domain: message
-  optional: true
-- label: phy in
-  domain: message
-  optional: true
-
-outputs:
-- label: app out
-  domain: message
-  optional: true
-- label: phy out
-  domain: message
-  optional: true
+  dtype: string
+  optional: 1
 
 #  'file_format' specifies the version of the GRC yml format used in the file
 #  and should usually not be changed.

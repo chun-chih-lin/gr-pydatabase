@@ -21,9 +21,9 @@
 
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
-from mac import mac
+from redis_sink_exp import redis_sink_exp
 
-class qa_mac(gr_unittest.TestCase):
+class qa_redis_sink_exp(gr_unittest.TestCase):
 
     def setUp(self):
         self.tb = gr.top_block()
@@ -38,4 +38,4 @@ class qa_mac(gr_unittest.TestCase):
 
 
 if __name__ == '__main__':
-    gr_unittest.run(qa_mac)
+    gr_unittest.run(qa_redis_sink_exp)
