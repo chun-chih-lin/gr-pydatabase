@@ -30,12 +30,13 @@ class redis_source(gr.sync_block):
     """
     docstring for block redis_source
     """
-    def __init__(self, db_ch, db_port, db_host, db_idx):
+    def __init__(self, db_ch, db_port, db_host, db_idx, debug):
         gr.sync_block.__init__(self,
             name="redis_source",
             in_sig=None,
             out_sig=None)
 
+        self.debug = debug
         self.db_ch = db_ch
         self.db_port = db_port
         self.db_host = db_host
@@ -51,6 +52,11 @@ class redis_source(gr.sync_block):
 
         self.message_port_register_out(pmt.string_to_symbol("pdu"))
         self.thread = threading.Thread(target=self.run_subscribe)
+
+    def log(self, s):
+        if self.debug:
+            print(s)
+        pass
 
     def start(self):
         self.thread.start()

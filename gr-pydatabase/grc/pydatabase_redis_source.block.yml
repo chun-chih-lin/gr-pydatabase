@@ -4,7 +4,7 @@ category: '[pydatabase]'
 
 templates:
   imports: import pydatabase
-  make: pydatabase.redis_source(${db_ch}, ${db_port}, ${db_host}, ${db_idx})
+  make: pydatabase.redis_source(${db_ch}, ${db_port}, ${db_host}, ${db_idx}, ${debug})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
@@ -28,7 +28,13 @@ parameters:
   label: DB Host
   dtype: string
   default: "localhost"
-
+- id: debug
+  label: Debug
+  dtype: bool
+  default: 'False'
+  options: ['True', 'False']
+  option_labels: [Enable, Disable]
+  
 #  Make one 'inputs' list entry per input and one 'outputs' list entry per output.
 #  Keys include:
 #      * label (an identifier for the GUI)

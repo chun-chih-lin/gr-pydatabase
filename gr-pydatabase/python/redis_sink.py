@@ -30,8 +30,6 @@ import scapy.all as scapy
 import numpy
 from gnuradio import gr
 
-
-
 class redis_sink(gr.sync_block):
     """
     doc string for block redis_sink
@@ -73,14 +71,14 @@ class redis_sink(gr.sync_block):
         self.message_port_register_in(pmt.string_to_symbol("pdu"))
         self.set_msg_handler(pmt.string_to_symbol("pdu"), self.parse_pdu_into_db)
 
-    def debug(self, s):
+    def msg_debug(self, s):
         if self.debug:
-            self.log(s)
+            print(s)
         pass
 
     def parse_pdu_into_db(self, pdu):
         def check_dest(addr):
-            # self.log(f'{self.macaddr}, {addr}')
+            # self.msg_debug(f'{self.macaddr}, {addr}')
             return self.macaddr == addr
         def get_type(frame_type, frame_subtype):
             if frame_type == 0:
@@ -192,9 +190,9 @@ class redis_sink(gr.sync_block):
             return switcher.get(subtype, "Reserved")
 
         # Check if pdu is PDU
-        # self.log("[gr-pydatabase] Check if pdu is PDU...")
+        # self.msg_debug("[gr-pydatabase] Check if pdu is PDU...")
         if pmt.is_pair(pdu):
-            # self.log("[gr-pydatabase] It is a PDU!")
+            # self.msg_debug("[gr-pydatabase] It is a PDU!")
             meta = pmt.to_python(pmt.car(pdu))
             if meta is None:
                 meta = dict()
@@ -209,7 +207,7 @@ class redis_sink(gr.sync_block):
 
                 ### header_info: for future used as indication for the receiver and transmitter
                 is_for_me, header_info, frame_type = parse_header(pmt_vector)
-                self.log(f'Receive a type: {header_info["type"]} frame')
+                self.msg_debug(f'Receive a type: {header_info["type"]} frame')
                 if is_for_me:
                     if header_info['type'] == self.FRMAE_DATA:
                         real_csi = meta['csi'].real.tolist()
@@ -218,10 +216,10 @@ class redis_sink(gr.sync_block):
                         meta['real'] = real_csi
                         meta['imag'] = imag_csi
                         info_json = json.dumps(meta)
-                        self.log(f'It is for me. header_info["type"]: {header_info["type"]}')
-                        self.log(f'It is for me. header_info["subtype"]: {header_info["subtype"]}')
+                        self.msg_debug(f'It is for me. header_info["type"]: {header_info["type"]}')
+                        self.msg_debug(f'It is for me. header_info["subtype"]: {header_info["subtype"]}')
                         # Only write the data to db if it is a DATA frame
-                        self.log(f'Receive a DATA frame')
+                        self.msg_debug(f'Receive a DATA frame')
                         self.reply_with_ack(header_info['addr2'])
                         self.set_to_db(payload, info_json)
                     else:
@@ -229,8 +227,8 @@ class redis_sink(gr.sync_block):
                             self.action_to_ack()
                 else:
                     # The destination is not me. Discard the received pkt.
-                    # self.log('header_info:\n', header_info)
-                    self.log(f'It is not for me. Send to {header_info["addr1"]}, I\'m {self.macaddr}')
+                    # self.msg_debug('header_info:\n', header_info)
+                    self.msg_debug(f'It is not for me. Send to {header_info["addr1"]}, I\'m {self.macaddr}')
                     pass
         self.pipeline.execute()
         self.pipeline.reset()
@@ -238,37 +236,37 @@ class redis_sink(gr.sync_block):
 
     def action_to_ack(self):
         ACK_status = self.redis_db.get(self.MONITOR_ACK)
-        self.log(f'[Redis_sink] ACK Status: {ACK_status.decode("utf-8")}')
+        self.msg_debug(f'[Redis_sink] ACK Status: {ACK_status.decode("utf-8")}')
         if ACK_status.decode('utf-8') == self.ACK_STATE_WAIT:
-            self.log('[Redis_sink] Receive ACK.')
+            self.msg_debug('[Redis_sink] Receive ACK.')
             p = self.redis_db.pipeline()
             p.set(self.MONITOR_ACK, self.ACK_STATE_SUCC)
             p.set(self.REDEVICE_STATE, self.KEYWORD_IDLE)
             p.rpop(self.QUEUE_NAME)
             p.execute()
             p.reset()
-            self.log('[Redis_sink] RPOP. Can start the next msg...')
+            self.msg_debug('[Redis_sink] RPOP. Can start the next msg...')
         else:
-            self.log('[Redis_sink] Receive redundent ACK...')
+            self.msg_debug('[Redis_sink] Receive redundent ACK...')
 
     def get_info_from_vector(self, pmt_vector, start_pos, length):
         data = "".join([chr(r) for r in pmt_vector[start_pos:start_pos+length]])
         return data
 
     def reply_with_ack(self, addr):
-        self.log(f'[Redis_sink] Receive a DATA frame. Reply with ACK to address: {addr}')
+        self.msg_debug(f'[Redis_sink] Receive a DATA frame. Reply with ACK to address: {addr}')
         ack_frame = scapy.Dot11FCS(addr1=addr, type=1, subtype=13, FCfield=0)
         self.sock.sendto(bytes(ack_frame), ("127.0.0.1", 52001))
         pass
 
     def set_to_db(self, payload, info_json):
-        # self.log("[gr-pydatabase] Parsing the payload and set the information to db...")
+        # self.msg_debug("[gr-pydatabase] Parsing the payload and set the information to db...")
         try:
             seq = json.loads(payload)['sequence']
             self.pipeline.hmset(f'Recv:{seq}:{str(time.time())}', {'payload': payload, 'info': info_json})
         except Exception as exp:
-            self.log(f'[Redis_sink] Exception: set_to_db {exp}')
-            self.log(f'[Redis_sink] Exception: payload:\n', payload, '\ninfo:\n', info_json)
+            self.msg_debug(f'[Redis_sink] Exception: set_to_db {exp}')
+            self.msg_debug(f'[Redis_sink] Exception: payload:\n', payload, '\ninfo:\n', info_json)
         pass
 
     def work(self, input_items, output_items):

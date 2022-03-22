@@ -34,12 +34,13 @@ class redis_sink_exp(gr.sync_block):
     """
     doc string for block redis_sink
     """
-    def __init__(self, db_ch, db_port, db_host, db_idx):
+    def __init__(self, db_ch, db_port, db_host, db_idx, debug):
         gr.sync_block.__init__(self,
             name="redis_sink_exp",
             in_sig=None,
             out_sig=None)
 
+        self.debug = debug
         self.db_ch = db_ch
         self.db_port = db_port
         self.db_host = db_host
@@ -50,6 +51,11 @@ class redis_sink_exp(gr.sync_block):
 
         self.message_port_register_in(pmt.string_to_symbol("pdu"))
         self.set_msg_handler(pmt.string_to_symbol("pdu"), self.parse_pdu_into_db)
+
+    def msg_debug(self, s):
+        if self.debug:
+            self.msg_debug(s)
+        pass
 
     def parse_pdu_into_db(self, pdu):
         def get_subtype_mgmt(subtype):
@@ -120,9 +126,9 @@ class redis_sink_exp(gr.sync_block):
             return switcher.get(subtype, "Reserved")
 
         # Check if pdu is PDU
-        # print("[gr-pydatabase] Check if pdu is PDU...")
+        # self.msg_debug("[gr-pydatabase] Check if pdu is PDU...")
         if pmt.is_pair(pdu):
-            # print("[gr-pydatabase] It is a PDU!")
+            # self.msg_debug("[gr-pydatabase] It is a PDU!")
             meta = pmt.to_python(pmt.car(pdu))
             if meta is None:
                 meta = dict()
@@ -152,14 +158,14 @@ class redis_sink_exp(gr.sync_block):
         return data
 
     def set_to_db(self, payload, info_json):
-        # print("[gr-pydatabase] Parsing the payload and set the information to db...")
-        # print(json.loads(payload))
+        # self.msg_debug("[gr-pydatabase] Parsing the payload and set the information to db...")
+        # self.msg_debug(json.loads(payload))
         try:
             seq = json.loads(payload)['sequence']
             self.pipeline.hmset(f'Recv:{seq}:{str(time.time())}', {'payload': payload, 'info': info_json})
         except Exception as exp:
-            print(f'[Redis_sink] Exception: set_to_db {exp}')
-            print(f'[Redis_sink] Exception: payload:\n', payload, '\ninfo:\n', info_json)
+            self.msg_debug(f'[Redis_sink] Exception: set_to_db {exp}')
+            self.msg_debug(f'[Redis_sink] Exception: payload:\n', payload, '\ninfo:\n', info_json)
         pass
 
     def work(self, input_items, output_items):
