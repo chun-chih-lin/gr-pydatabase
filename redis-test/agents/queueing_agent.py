@@ -93,8 +93,8 @@ class QueueAgent(object):
 				p.set(self.RFDEVICE_STATE, self.KEYWORD_BUSY)
 				p.execute()
 			else:
-				print('Still processing, sleep for 1 second.')
-				time.sleep(1)
+				print('[Queue] Still processing, sleep for 0.001 second.')
+				time.sleep(0.001)
 			pass
 		pass
 		print('Done processing all the msg in queue')

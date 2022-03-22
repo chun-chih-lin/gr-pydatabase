@@ -91,6 +91,7 @@ class TransAgent(object):
 		# Add the key into waiting ACK list.
 		p = self.db.pipeline()
 		# Trigger the RF front-end to transmit
+		print(f'=================== Transmitting Trans:{db_key}...')
 		p.set(f'Trans:{db_key}', PMDU_msg)
 		# p.sadd(self.KEYWORD_WAIT_ACK, db_key)
 		p.set(self.MONITOR_ACK, self.ACK_STATE_WAIT)
@@ -114,7 +115,7 @@ class TransAgent(object):
 				# It must receive the ACK
 				return
 			elif waiting_time <= self.WAIT_MAX:
-				print(f'[Trans Agent] {self.db.get(self.MONITOR_ACK).decode("utf-    8")}, {waiting_time} < {self.WAIT_MAX}, not timeout.')
+				print(f'[Trans Agent] {self.db.get(self.MONITOR_ACK).decode("utf-8")}, {waiting_time} < {self.WAIT_MAX}, not timeout.')
 				# Haven't received the ACK yet, and not timeout yet.
 				time.sleep(waiting_interval)
 				waiting_time += waiting_interval

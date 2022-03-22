@@ -1,10 +1,10 @@
-id: pydatabase_redis_sink
-label: Redis Sink
+id: pydatabase_redis_var_sink
+label: 'Redis Var Sink'
 category: '[pydatabase]'
 
 templates:
   imports: import pydatabase
-  make: pydatabase.redis_sink(${db_ch}, ${db_port}, ${db_host}, ${db_idx}, ${macaddr}, ${debug})
+  make: pydatabase.redis_var_sink(${db_ch}, ${db_port}, ${db_host}, ${db_idx})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
@@ -28,16 +28,6 @@ parameters:
   label: DB Host
   dtype: string
   default: "localhost"
-- id: macaddr
-  label: MAC Address
-  dtype: string
-  default: "00:00:00:00:00:00"
-- id: debug
-  label: Debug
-  dtype: bool
-  default: 'False'
-  options: ['True', 'False']
-  option_labels: [Enable, Disable]
 
 #  Make one 'inputs' list entry per input and one 'outputs' list entry per output.
 #  Keys include:
@@ -47,10 +37,9 @@ parameters:
 #      * vlen (optional - data stream vector length. Default is 1)
 #      * optional (optional - set to 1 for optional inputs. Default is 0)
 inputs:
-- label: pdu
-  domain: message
-  dtype: string
-  optional: 1
+- label: var_in
+  domain: stream
+  dtype: float
 
 #  'file_format' specifies the version of the GRC yml format used in the file
 #  and should usually not be changed.
