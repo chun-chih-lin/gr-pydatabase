@@ -35,7 +35,10 @@ GR_PYTHON_INSTALL(
     redis_subscriber.py
     redis_source.py
     redis_sink.py
-    mac.py DESTINATION ${GR_PYTHON_DIR}/pydatabase
+    redis_variable.py
+    redis_var_sink.py
+    redis_sink_exp.py
+    redis_source_exp.py DESTINATION ${GR_PYTHON_DIR}/pydatabase
 )
 
 ########################################################################
@@ -48,4 +51,7 @@ set(GR_TEST_PYTHON_DIRS ${CMAKE_BINARY_DIR}/swig)
 GR_ADD_TEST(qa_redis_subscriber ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_subscriber.py)
 GR_ADD_TEST(qa_redis_source ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_source.py)
 GR_ADD_TEST(qa_redis_sink ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_sink.py)
-GR_ADD_TEST(qa_mac ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_mac.py)
+GR_ADD_TEST(qa_redis_variable ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_variable.py)
+GR_ADD_TEST(qa_redis_var_sink ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_var_sink.py)
+GR_ADD_TEST(qa_redis_sink_exp ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_sink_exp.py)
+GR_ADD_TEST(qa_redis_source_exp ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_source_exp.py)

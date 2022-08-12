@@ -42,5 +42,10 @@ except module_not_found_error:
 from .redis_subscriber import redis_subscriber
 from .redis_source import redis_source
 from .redis_sink import redis_sink
-from .mac import mac
+
+from .redis_variable import redis_variable
+from .redis_var_sink import redis_var_sink
+from .redis_sink_exp import redis_sink_exp
+from .redis_source_exp import redis_source_exp
+
 #

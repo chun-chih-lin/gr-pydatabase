@@ -17,10 +17,12 @@
 # along with GNU Radio; see the file COPYING.  If not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
-
 install(FILES
     pydatabase_redis_subscriber.block.yml
     pydatabase_redis_source.block.yml
     pydatabase_redis_sink.block.yml
-    pydatabase_mac.block.yml DESTINATION share/gnuradio/grc/blocks
+    pydatabase_redis_variable.block.yml
+    pydatabase_redis_var_sink.block.yml
+    pydatabase_redis_sink_exp.block.yml
+    pydatabase_redis_source_exp.block.yml DESTINATION share/gnuradio/grc/blocks
 )
