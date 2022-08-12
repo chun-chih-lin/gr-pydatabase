@@ -7,7 +7,7 @@ db = redis.Redis(host='localhost', db=0, port=6379)
 prefix = "Recv:"
 
 if len(sys.argv) >=2:
-	prefix = sys.argc[1]
+	prefix = sys.argv[1]
 
 print(f'Delete prefix: {prefix}')
 
