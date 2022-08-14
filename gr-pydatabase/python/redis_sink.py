@@ -263,7 +263,13 @@ class redis_sink(gr.sync_block):
         # self.msg_debug("[gr-pydatabase] Parsing the payload and set the information to db...")
         try:
             seq = json.loads(payload)['sequence']
-            self.pipeline.hmset(f'Recv:{seq}:{str(time.time())}', {'payload': payload, 'info': info_json})
+            set_key = f'Recv:{seq}'
+            self.msg_debug(f'[Redis_sink] keys: {set_key+":*"}, result: {self.redis_db.keys(set_key+":*")}')
+            if self.redis_db.keys(set_key + ':*'):
+                # Already in db
+                self.msg_debug(f'[Redis_sink] key {set_key+":*"}, Already in db')
+            else:
+                self.pipeline.hmset(f'Recv:{seq}:{str(time.time())}', {'payload': payload, 'info': info_json})
         except Exception as exp:
             self.msg_debug(f'[Redis_sink] Exception: set_to_db {exp}')
             self.msg_debug(f'[Redis_sink] Exception: payload:\n', payload, '\ninfo:\n', info_json)
