@@ -213,6 +213,7 @@ class redis_sink(gr.sync_block):
                         real_csi = meta['csi'].real.tolist()
                         imag_csi = meta['csi'].imag.tolist()
                         meta.pop('csi', None)
+                        self.detect_interference_by_csi(real_csi, imag_csi)
                         meta['real'] = real_csi
                         meta['imag'] = imag_csi
                         info_json = json.dumps(meta)
@@ -233,6 +234,9 @@ class redis_sink(gr.sync_block):
         self.pipeline.execute()
         self.pipeline.reset()
         pass
+	
+    def detect_interference_by_csi(self, csi_r, csi_i):
+        self.msg_debug('detecting interference by CSI...')
 
     def action_to_ack(self):
         ACK_status = self.redis_db.get(self.MONITOR_ACK)

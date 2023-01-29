@@ -10,7 +10,7 @@ from datetime import datetime
 import sys
 import argparse
 
-Loop_MAX = 1
+Loop_MAX = 1000
 # The maximum MSDU is 1500 bytes before encryption.
 MSDU_MAX = 200
 

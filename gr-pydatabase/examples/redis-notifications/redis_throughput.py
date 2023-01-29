@@ -9,12 +9,12 @@ from time import sleep
 from datetime import datetime
 import sys
 
-Loop_MAX = 5000
+Loop_MAX = 100
 # The maximum MSDU is 1500 bytes before encryption.
 MSDU_MAX = 100
 
 ID = 'a'
-sleep_bw_pkt = 0.001
+sleep_bw_pkt = 0.01
 
 print(len(sys.argv))
 
@@ -61,7 +61,6 @@ def run_with_pipeline():
 	print("Total time w/ pipeline: ", time.time()-start_time)
 
 def main():
-	r.flushall()
 	print("Start transmitting packets...")
 	print(f"Rest interval: {sleep_bw_pkt} seconds.")
 	print(f"Sequence: {ID}, Total packets: {Loop_MAX}")
