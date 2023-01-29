@@ -41,9 +41,9 @@ def detecting(k, filename):
         ttl_csi[idx][:] = csi
         ttl_timestamp[idx] = timestamp
     
-    save_numpy(f'{filename}_snr.json', ttl_snr)
-    save_numpy(f'{filename}_csi.json', ttl_csi)
-    save_numpy(f'{filename}_timestamp.json', ttl_timestamp)
+    save_numpy(f'{filename}_snr.np', ttl_snr)
+    save_numpy(f'{filename}_csi.np', ttl_csi)
+    save_numpy(f'{filename}_timestamp.np', ttl_timestamp)
 
 def main():
     keys = ['2465_n10', '2465_n20', '2470_n10', '2470_n20']
