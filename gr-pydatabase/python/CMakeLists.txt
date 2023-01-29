@@ -38,7 +38,8 @@ GR_PYTHON_INSTALL(
     redis_variable.py
     redis_var_sink.py
     redis_sink_exp.py
-    redis_source_exp.py DESTINATION ${GR_PYTHON_DIR}/pydatabase
+    redis_source_exp.py
+    usrp_command_source.py DESTINATION ${GR_PYTHON_DIR}/pydatabase
 )
 
 ########################################################################
@@ -55,3 +56,4 @@ GR_ADD_TEST(qa_redis_variable ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/q
 GR_ADD_TEST(qa_redis_var_sink ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_var_sink.py)
 GR_ADD_TEST(qa_redis_sink_exp ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_sink_exp.py)
 GR_ADD_TEST(qa_redis_source_exp ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_redis_source_exp.py)
+GR_ADD_TEST(qa_usrp_command_source ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_usrp_command_source.py)

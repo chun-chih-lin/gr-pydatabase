@@ -59,7 +59,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [176, 708.0]
+    coordinate: [200, 676.0]
     rotation: 0
     state: enabled
 - name: encoding
@@ -145,7 +145,7 @@ blocks:
       5910000000.0, 5920000000.0]'
     orient: Qt.QVBoxLayout
     type: real
-    value: 2472e6
+    value: 2484e6
     widget: combo_box
   states:
     bus_sink: false
@@ -166,13 +166,13 @@ blocks:
     start: '0'
     step: '0.01'
     stop: '1'
-    value: '0.7'
+    value: '0.02'
     widget: counter_slider
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [40, 708.0]
+    coordinate: [64, 676.0]
     rotation: 0
     state: enabled
 - name: interval
@@ -195,7 +195,7 @@ blocks:
     bus_structure: null
     coordinate: [304, 12.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: lo_offset
   id: variable_qtgui_chooser
   parameters:
@@ -258,7 +258,7 @@ blocks:
     bus_structure: null
     coordinate: [176, 12.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: samp_rate
   id: variable_qtgui_chooser
   parameters:
@@ -280,13 +280,25 @@ blocks:
     options: '[5e6, 10e6, 20e6]'
     orient: Qt.QVBoxLayout
     type: real
-    value: 10e6
+    value: 20e6
     widget: combo_box
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
     coordinate: [616, 12.0]
+    rotation: 0
+    state: enabled
+- name: sdr_addr
+  id: variable
+  parameters:
+    comment: ''
+    value: '"addr=192.168.40.2"'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1312, 244.0]
     rotation: 0
     state: enabled
 - name: sync_length
@@ -298,7 +310,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [456, 756.0]
+    coordinate: [480, 724.0]
     rotation: 0
     state: enabled
 - name: tx_gain
@@ -313,7 +325,7 @@ blocks:
     start: '0'
     step: '0.01'
     stop: '1'
-    value: '0.75'
+    value: '0.02'
     widget: counter_slider
   states:
     bus_sink: false
@@ -331,7 +343,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [352, 756.0]
+    coordinate: [376, 724.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_mag_0
@@ -347,7 +359,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1056, 368.0]
+    coordinate: [1088, 392.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_mag_squared_0
@@ -363,7 +375,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [832, 296.0]
+    coordinate: [864, 320.0]
     rotation: 0
     state: enabled
 - name: blocks_conjugate_cc_0
@@ -378,7 +390,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [496, 384.0]
+    coordinate: [528, 408.0]
     rotation: 0
     state: enabled
 - name: blocks_delay_0
@@ -397,7 +409,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [832, 468.0]
+    coordinate: [864, 492.0]
     rotation: 180
     state: enabled
 - name: blocks_delay_0_0
@@ -416,7 +428,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [352, 380.0]
+    coordinate: [384, 404.0]
     rotation: 0
     state: enabled
 - name: blocks_divide_xx_0
@@ -434,7 +446,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1232.0, 432]
+    coordinate: [1264.0, 456]
     rotation: 270
     state: enabled
 - name: blocks_file_sink_0
@@ -452,7 +464,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1104, 628.0]
+    coordinate: [1136, 652.0]
     rotation: 0
     state: disabled
 - name: blocks_moving_average_xx_0
@@ -472,7 +484,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1056, 268.0]
+    coordinate: [1088, 292.0]
     rotation: 0
     state: true
 - name: blocks_moving_average_xx_1
@@ -492,7 +504,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [840, 340.0]
+    coordinate: [872, 364.0]
     rotation: 0
     state: true
 - name: blocks_multiply_const_vxx_0
@@ -528,7 +540,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [704, 352.0]
+    coordinate: [736, 376.0]
     rotation: 0
     state: enabled
 - name: blocks_pdu_to_tagged_stream_1
@@ -545,7 +557,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [696, 740.0]
+    coordinate: [728, 764.0]
     rotation: 0
     state: enabled
 - name: blocks_socket_pdu_0
@@ -565,7 +577,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [296, 132.0]
+    coordinate: [288, 132.0]
     rotation: 0
     state: enabled
 - name: blocks_stream_to_vector_0
@@ -583,7 +595,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [440, 456.0]
+    coordinate: [472, 480.0]
     rotation: 180
     state: enabled
 - name: blocks_vector_source_x_0
@@ -606,6 +618,21 @@ blocks:
     coordinate: [440, 156.0]
     rotation: 0
     state: enabled
+- name: drl_get_freq_0
+  id: drl_get_freq
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [432, 672.0]
+    rotation: 180
+    state: true
 - name: fft_vxx_0
   id: fft_vxx
   parameters:
@@ -624,7 +651,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [160, 532.0]
+    coordinate: [192, 540.0]
     rotation: 0
     state: enabled
 - name: foo_packet_pad2_0
@@ -661,7 +688,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [904, 636.0]
+    coordinate: [936, 660.0]
     rotation: 0
     state: disabled
 - name: ieee802_11_decode_mac_0
@@ -678,7 +705,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [648, 540.0]
+    coordinate: [680, 564.0]
     rotation: 0
     state: enabled
 - name: ieee802_11_frame_equalizer_0
@@ -698,7 +725,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [400, 532.0]
+    coordinate: [432, 556.0]
     rotation: 0
     state: enabled
 - name: ieee802_11_mac_0
@@ -734,7 +761,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [616, 436.0]
+    coordinate: [648, 460.0]
     rotation: 180
     state: enabled
 - name: ieee802_11_sync_short_0
@@ -753,7 +780,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1008, 440.0]
+    coordinate: [1040, 464.0]
     rotation: 180
     state: enabled
 - name: pydatabase_redis_sink_0
@@ -766,12 +793,13 @@ blocks:
     db_host: localhost
     db_idx: '0'
     db_port: '6379'
+    debug: 'False'
     macaddr: ''
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [648, 612.0]
+    coordinate: [680, 636.0]
     rotation: 180
     state: enabled
 - name: pydatabase_redis_source_0
@@ -784,6 +812,7 @@ blocks:
     db_host: localhost
     db_idx: '0'
     db_port: '6379'
+    debug: 'False'
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
@@ -792,6 +821,21 @@ blocks:
     bus_structure: null
     coordinate: [24, 132.0]
     rotation: 0
+    state: true
+- name: pydatabase_usrp_command_source_0
+  id: pydatabase_usrp_command_source
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [88, 480.0]
+    rotation: 180
     state: true
 - name: qtgui_const_sink_x_0
   id: qtgui_const_sink_x
@@ -882,7 +926,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [936, 732.0]
+    coordinate: [968, 756.0]
     rotation: 0
     state: enabled
 - name: uhd_usrp_sink_0
@@ -997,7 +1041,7 @@ blocks:
     clock_source7: ''
     comment: ''
     dev_addr: ''
-    dev_args: '"addr=192.168.20.2"'
+    dev_args: sdr_addr
     gain0: tx_gain
     gain1: '0'
     gain10: '0'
@@ -1306,7 +1350,7 @@ blocks:
     dc_offs_enb8: '""'
     dc_offs_enb9: '""'
     dev_addr: ''
-    dev_args: '"addr=192.168.20.2"'
+    dev_args: sdr_addr
     gain0: gain_nor
     gain1: '0'
     gain10: '0'
@@ -1531,7 +1575,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [56, 292.0]
+    coordinate: [88, 316.0]
     rotation: 0
     state: enabled
 - name: wifi_phy_hier_0
@@ -1572,6 +1616,7 @@ connections:
 - [blocks_socket_pdu_0, pdus, wifi_phy_hier_0, mac_in]
 - [blocks_stream_to_vector_0, '0', fft_vxx_0, '0']
 - [blocks_vector_source_x_0, '0', wifi_phy_hier_0, '0']
+- [drl_get_freq_0, freq, ieee802_11_frame_equalizer_0, freq]
 - [fft_vxx_0, '0', ieee802_11_frame_equalizer_0, '0']
 - [foo_packet_pad2_0, '0', uhd_usrp_sink_0, '0']
 - [foo_wireshark_connector_0, '0', blocks_file_sink_0, '0']
@@ -1584,6 +1629,8 @@ connections:
 - [ieee802_11_sync_short_0, '0', blocks_delay_0, '0']
 - [ieee802_11_sync_short_0, '0', ieee802_11_sync_long_0, '0']
 - [pydatabase_redis_source_0, pdu, ieee802_11_mac_0, app in]
+- [pydatabase_usrp_command_source_0, msg, uhd_usrp_sink_0, command]
+- [pydatabase_usrp_command_source_0, msg, uhd_usrp_source_0, command]
 - [uhd_usrp_source_0, '0', blocks_complex_to_mag_squared_0, '0']
 - [uhd_usrp_source_0, '0', blocks_delay_0_0, '0']
 - [uhd_usrp_source_0, '0', blocks_multiply_xx_0, '0']

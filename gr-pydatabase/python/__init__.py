@@ -47,5 +47,6 @@ from .redis_variable import redis_variable
 from .redis_var_sink import redis_var_sink
 from .redis_sink_exp import redis_sink_exp
 from .redis_source_exp import redis_source_exp
+from .usrp_command_source import usrp_command_source
 
 #
