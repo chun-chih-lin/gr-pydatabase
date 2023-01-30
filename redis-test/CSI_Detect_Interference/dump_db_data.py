@@ -51,8 +51,8 @@ def detecting(k, filename):
     save_numpy(f'{filename}_timestamp.npy', ttl_timestamp)
 
 def main():
-    keys = ['wi_inter']
-    files = ['wi_inter']
+    keys = ['no_inter_5g']
+    files = ['no_inter_5g']
     for key, filename in zip(keys, files):
         print(f'Processing for key: {key}')
         detecting(key, filename)
