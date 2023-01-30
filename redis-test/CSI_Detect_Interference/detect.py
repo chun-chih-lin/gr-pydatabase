@@ -45,11 +45,14 @@ def detecting_interference(csi_ary):
 	avg_len = 2
 
 	plt.figure()
-	slope_threshold_min = 0.85
-	slope_threshold_max = 1.15
+	slope_threshold_min = 0.80
+	slope_threshold_max = 1.2
 	detection = np.zeros(len(csi_ary))
+	received_packets = 0
 	for csi_i, csi in enumerate(csi_ary):
 		slopes = []
+		if csi[0] != 0:
+			received_packets += 1
 		for i, s in enumerate(csi):
 			if i < csi_l - avg_len:
 				if abs(csi[i+avg_len]) == 0:
@@ -63,6 +66,8 @@ def detecting_interference(csi_ary):
 		plt.plot(slopes)
 	plt.grid(True)
 	
+	print(f'Total received packets: {received_packets}')
+	print(f'Interfered packets: {sum(detection)}')
 
 	plt.figure()
 	for csi_i, csi in enumerate(csi_ary):
@@ -77,6 +82,7 @@ def detecting_interference(csi_ary):
 
 	plt.show()
 
+	
 
 
 def process(prefix):
