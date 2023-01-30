@@ -41,13 +41,18 @@ def detecting(k, filename):
         ttl_csi[idx][:] = csi
         ttl_timestamp[idx] = timestamp
     
-    #save_numpy(f'{filename}_snr.np', ttl_snr)
-    #save_numpy(f'{filename}_csi.np', ttl_csi)
-    #save_numpy(f'{filename}_timestamp.np', ttl_timestamp)
+
+    print(f'save to file: {filename}_snr.npy')
+    print(f'save to file: {filename}_csi.npy')
+    print(f'save to file: {filename}_timestamp.npy')
+
+    save_numpy(f'{filename}_snr.npy', ttl_snr)
+    save_numpy(f'{filename}_csi.npy', ttl_csi)
+    save_numpy(f'{filename}_timestamp.npy', ttl_timestamp)
 
 def main():
-    keys = ['2465_n10', '2465_n20', '2470_n10', '2470_n20']
-    files = ['2465_n20', '2465_n10', '2470_n10', '2470_n20']
+    keys = ['wi_inter']
+    files = ['wi_inter']
     for key, filename in zip(keys, files):
         print(f'Processing for key: {key}')
         detecting(key, filename)
