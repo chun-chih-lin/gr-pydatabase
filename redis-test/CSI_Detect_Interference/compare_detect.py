@@ -45,11 +45,8 @@ def detecting_interference(csi_ary, sig_type=None):
 		return detected
 
 	def detect_csi_by_filter(csi, threshold=0.03):
-		# print(f'{list(abs(csi)) = }', end=', ')
 		if any(s >= threshold for s in abs(csi)):
-			# print(1)
 			return 1
-		# print(0)
 		return 0
 
 	# -----------------------
@@ -65,6 +62,9 @@ def detecting_interference(csi_ary, sig_type=None):
 		if abs(csi[0]) != 0:
 			sig_ary.append(csi)
 	sig_ary = csi_ary
+
+	def get_energy(signal):
+		return np.square(signal)
 
 	filtered = get_bandpass_csi(abs(sig_ary), lowcutoff=.9, highcutoff=18)
 
@@ -91,6 +91,81 @@ def detecting_interference(csi_ary, sig_type=None):
 		detection_slope.append(detect_slope)
 
 	plt.figure()
+	detection_energy = []
+	plt.subplot(131)
+	for csi in filtered:
+		if abs(csi)[0] != 0:
+			energy_csi = get_energy(csi)
+			t3 = np.quantile(energy_csi, 0.9)
+			coefficient = 2.5
+			detect = np.nonzero(energy_csi > coefficient*t3)[0]
+			
+			if len(detect) >= 3:
+				detection_energy.append(1)
+				color = 'tab:red'
+			elif any(e > 0.0009 for e in energy_csi):
+				detection_energy.append(1)
+				color = 'tab:red'
+			else:
+				detection_energy.append(0)
+				color = 'tab:blue'
+				plt.plot(energy_csi, color=color)
+			# plt.axhline(t3, color='red', linewidth=.5)
+		else:
+			detection_energy.append(0)
+	plt.grid(True)
+	plt.ylim(0, 0.01)
+
+	plt.subplot(221)
+	for csi in filtered:
+		energy_csi = get_energy(csi)
+		plt.plot(abs(energy_csi), color='grey', linewidth=.5, alpha=.5)
+	for (csi, d) in zip(filtered, detection_energy):
+		energy_csi = get_energy(csi)
+		if d == 0:
+			color = 'tab:blue'
+			plt.plot(abs(energy_csi), color=color, linewidth=.5)
+	plt.axhline(0.0009, color='red', linewidth=.5)
+	plt.grid(True)
+
+	plt.subplot(222)
+	for csi in filtered:
+		energy_csi = get_energy(csi)
+		plt.plot(abs(energy_csi), color='grey', linewidth=.5, alpha=.5)
+	for (csi, d) in zip(filtered, detection_energy):
+		energy_csi = get_energy(csi)
+		if d == 1:
+			color = 'tab:red'
+			plt.plot(abs(energy_csi), color=color, linewidth=.5)
+	plt.axhline(0.0009, color='red', linewidth=.5)
+	plt.grid(True)
+
+	plt.subplot(223)
+	for csi in sig_ary:
+		plt.plot(abs(csi), color='grey', linewidth=.5, alpha=.5)
+	for (csi, d) in zip(sig_ary, detection_energy):
+		if d == 0:
+			color = 'tab:blue'
+			plt.plot(abs(csi), color=color, linewidth=.5)
+	plt.grid(True)
+
+	plt.subplot(224)
+	for csi in sig_ary:
+		plt.plot(abs(csi), color='grey', linewidth=.5, alpha=.5)
+	for (csi, d) in zip(sig_ary, detection_energy):
+		if d == 1:
+			color = 'tab:red'
+			plt.plot(abs(csi), color=color, linewidth=.5)
+	plt.grid(True)
+
+
+
+
+	
+
+
+	"""
+	plt.figure()
 	plt.subplot(121)
 	for csi in filtered:
 		plt.plot(csi, color='grey', linewidth=1, alpha=0.5)
@@ -110,60 +185,80 @@ def detecting_interference(csi_ary, sig_type=None):
 	plt.ylim(-.12, .12)
 	plt.axhline(filter_threshold, color='r', linewidth=.5)
 	plt.grid(True)
+	"""
 
-	plt.figure()
-	plt.subplot(121)
+	"""
+	plt.figure(figsize=(14, 6), dpi=80)
+	plt.subplot(221)
 	for csi in sig_ary:
 		plt.plot(abs(csi), color='grey', linewidth=1, alpha=0.5)
 	for csi_i, (csi, d_s, d_f) in enumerate(zip(sig_ary, detection_slope, detection_filter)):
-		if d_s == d_f == 0:
+		if d_f == 0:
 			color = 'tab:blue'
 			plt.plot(abs(csi), color=color, linewidth=.5)
 	plt.ylim(0, 0.52)
 	plt.xlim(0, 51)
 	plt.grid(True)
-	plt.title('Normal signal')
+	plt.title('(filtered) Normal signal')
 
-	plt.subplot(122)
+	plt.subplot(222)
 	for csi in sig_ary:
 		plt.plot(abs(csi), color='grey', linewidth=1, alpha=0.5)
 	for csi_i, (csi, d_s, d_f) in enumerate(zip(sig_ary, detection_slope, detection_filter)):
-		if d_s == d_f == 1:
+		if d_s == 0:
+			color = 'tab:blue'
+			plt.plot(abs(csi), color=color, linewidth=.5)
+	plt.ylim(0, 0.52)
+	plt.xlim(0, 51)
+	plt.grid(True)
+	plt.title('(Slope) Normal signal')
+
+	plt.subplot(223)
+	for csi in sig_ary:
+		plt.plot(abs(csi), color='grey', linewidth=1, alpha=0.5)
+	for csi_i, (csi, d_s, d_f) in enumerate(zip(sig_ary, detection_slope, detection_filter)):
+		if d_f == 1:
 			color = 'tab:red'
 			plt.plot(abs(csi), color=color, linewidth=.5)
 	plt.ylim(0, 0.52)
 	plt.xlim(0, 51)
 	plt.grid(True)
-	plt.title('Interfered signal')
+	plt.title('(filtered) Interfered signal')
+
+	plt.subplot(224)
+	for csi in sig_ary:
+		plt.plot(abs(csi), color='grey', linewidth=1, alpha=0.5)
+	for csi_i, (csi, d_s, d_f) in enumerate(zip(sig_ary, detection_slope, detection_filter)):
+		if d_s == 1:
+			color = 'tab:red'
+			plt.plot(abs(csi), color=color, linewidth=.5)
+	plt.ylim(0, 0.52)
+	plt.xlim(0, 51)
+	plt.grid(True)
+	plt.title('(Slope) Interfered signal')
+	"""
 
 	if sig_type is not None:
 		plt.suptitle(sig_type)
-
 	return detection_slope
-	
 
+
+# ===============================================================
+def preprecessing(csi_ary):
+
+	pass
+
+# ===============================================================
 def process(csi_ary, timestamp_ary, sig_type='None'):
+	# preprecessing(csi_ary)
+	# if True:
+	# 	return
 	# detecting for the interference
 	detected = detecting_interference(csi_ary, sig_type=sig_type)
 
 	if detected is None:
-		return
-
-	time_ary = [timestamp_ary[np.nonzero(timestamp_ary)[0][0]]]
-	for t_i, time in enumerate(timestamp_ary):
-		if time == 0:
-			time_ary.append(time_ary[t_i-1])
-		else:
-			time_ary.append(time)
-	
-	# plt.figure()
-	# for i, (d, t) in enumerate(zip(detected, timestamp_ary)):
-	# 	if t != 0:
-	# 		color = "tab:blue"
-	# 		if d == 1:
-	# 			color = "tab:red"
-	# 		plt.plot(i, t, color=color, marker='.')
-	# plt.grid(True)
+		return None
+	return detected
 
 	
 # ===============================================================
@@ -173,8 +268,9 @@ def main():
 	w_csi = read_npy('ch_13_wi_inter_csi.npy')
 	w_timestamp = read_npy('ch_13_wi_inter_timestamp.npy')
 
-	process(n_csi, n_timestamp, sig_type='No Inter')
-	process(w_csi, w_timestamp, sig_type='With Inter')
+	detected_no_inter = process(n_csi, n_timestamp, sig_type='No Inter')
+	detected_wi_inter = process(w_csi, w_timestamp, sig_type='With Inter')
+	
 	plt.show()
 	pass
 
