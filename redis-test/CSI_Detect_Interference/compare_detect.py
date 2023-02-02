@@ -49,6 +49,14 @@ def detecting_interference(csi_ary, sig_type=None):
 			return 1
 		return 0
 
+	def detect_csi_by_variance(csi, threshold=0):
+		var = np.var(csi)
+		if csi[0] == 0:
+			return 0, -1
+		if np.var(csi) >= threshold:
+			return 1, var
+		return 0, var
+
 	# -----------------------
 	def get_bandpass_csi(csi_ary, lowcutoff=.9, highcutoff=5):
 		filtered_ary = []
@@ -57,22 +65,24 @@ def detecting_interference(csi_ary, sig_type=None):
 			filtered_ary.append(filtered)
 		return filtered_ary
 
+	def get_energy(signal):
+		return np.square(signal)
+
+	# -----------------------
 	sig_ary = []
 	for csi in csi_ary:
 		if abs(csi[0]) != 0:
 			sig_ary.append(csi)
+	ttl_recv_pkt = len(sig_ary)
 	sig_ary = csi_ary
 
-	def get_energy(signal):
-		return np.square(signal)
-
-	filtered = get_bandpass_csi(abs(sig_ary), lowcutoff=.9, highcutoff=18)
+	filtered = get_bandpass_csi(abs(sig_ary), lowcutoff=.9, highcutoff=10)
 
 	# plt.figure()
 	# plt.subplot(121)
 	# for csi in filtered:
-	# 	plt.plot(csi)
-	# plt.ylim(-.12, .12)
+	# 	plt.plot(abs(csi))
+	# plt.ylim(0, .12)
 	# plt.grid(True)
 
 	# plt.subplot(122)
@@ -80,19 +90,29 @@ def detecting_interference(csi_ary, sig_type=None):
 	# 	plt.plot(abs(csi))
 	# plt.grid(True)
 
+	# if True:
+	# 	return
 
 	detection_slope = []
 	detection_filter = []
+	detection_var = []
 	filter_threshold = 0.02
+	ttl_var, var_c = 0, 0
 	for csi_i, csi in enumerate(sig_ary):
 		detect_filter = detect_csi_by_filter(filtered[csi_i], filter_threshold)
 		detect_slope = detect_csi_by_slope(csi)
+		detect_var, var = detect_csi_by_variance(filtered[csi_i], threshold=2.8e-5)
 		detection_filter.append(detect_filter)
 		detection_slope.append(detect_slope)
+		detection_var.append(detect_var)
+		if var >= 0:
+			ttl_var += var
+			var_c += 1
+	print(f'{ttl_var/var_c = }')
 
 	plt.figure()
 	detection_energy = []
-	plt.subplot(131)
+	# plt.subplot(131)
 	for csi in filtered:
 		if abs(csi)[0] != 0:
 			energy_csi = get_energy(csi)
@@ -109,53 +129,63 @@ def detecting_interference(csi_ary, sig_type=None):
 			else:
 				detection_energy.append(0)
 				color = 'tab:blue'
-				plt.plot(energy_csi, color=color)
+				# plt.plot(energy_csi, color=color)
 			# plt.axhline(t3, color='red', linewidth=.5)
 		else:
 			detection_energy.append(0)
-	plt.grid(True)
-	plt.ylim(0, 0.01)
+	# plt.grid(True)
+	# plt.ylim(0, 0.01)
+
+	detection_method = detection_var
+	n_wi_inter = sum(detection_method)
+	n_no_inter = ttl_recv_pkt - n_wi_inter
 
 	plt.subplot(221)
 	for csi in filtered:
 		energy_csi = get_energy(csi)
 		plt.plot(abs(energy_csi), color='grey', linewidth=.5, alpha=.5)
-	for (csi, d) in zip(filtered, detection_energy):
+	for (csi, d) in zip(filtered, detection_method):
 		energy_csi = get_energy(csi)
 		if d == 0:
 			color = 'tab:blue'
 			plt.plot(abs(energy_csi), color=color, linewidth=.5)
 	plt.axhline(0.0009, color='red', linewidth=.5)
+	plt.ylim(0, 0.025)
+	plt.title(f'Packet Number: {n_no_inter}, Percentage: {n_no_inter/ttl_recv_pkt*100}%')
 	plt.grid(True)
 
 	plt.subplot(222)
 	for csi in filtered:
 		energy_csi = get_energy(csi)
 		plt.plot(abs(energy_csi), color='grey', linewidth=.5, alpha=.5)
-	for (csi, d) in zip(filtered, detection_energy):
+	for (csi, d) in zip(filtered, detection_method):
 		energy_csi = get_energy(csi)
 		if d == 1:
 			color = 'tab:red'
 			plt.plot(abs(energy_csi), color=color, linewidth=.5)
 	plt.axhline(0.0009, color='red', linewidth=.5)
+	plt.ylim(0, 0.025)
+	plt.title(f'Packet Number: {n_wi_inter}, Percentage: {n_wi_inter/ttl_recv_pkt*100}%')
 	plt.grid(True)
 
 	plt.subplot(223)
 	for csi in sig_ary:
 		plt.plot(abs(csi), color='grey', linewidth=.5, alpha=.5)
-	for (csi, d) in zip(sig_ary, detection_energy):
+	for (csi, d) in zip(sig_ary, detection_method):
 		if d == 0:
 			color = 'tab:blue'
 			plt.plot(abs(csi), color=color, linewidth=.5)
+	plt.title(f'Packet Number: {n_no_inter}, Percentage: {n_no_inter/ttl_recv_pkt*100}%')
 	plt.grid(True)
 
 	plt.subplot(224)
 	for csi in sig_ary:
 		plt.plot(abs(csi), color='grey', linewidth=.5, alpha=.5)
-	for (csi, d) in zip(sig_ary, detection_energy):
+	for (csi, d) in zip(sig_ary, detection_method):
 		if d == 1:
 			color = 'tab:red'
 			plt.plot(abs(csi), color=color, linewidth=.5)
+	plt.title(f'Packet Number: {n_wi_inter}, Percentage: {n_wi_inter/ttl_recv_pkt*100}%')
 	plt.grid(True)
 
 
