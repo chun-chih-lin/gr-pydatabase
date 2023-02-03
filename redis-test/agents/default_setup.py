@@ -23,6 +23,7 @@ def main():
 	print(f'SET SELF:MACADDR {mac}')
 	pipe.set("SELF:MACADDR", mac)
 	pipe.set("RFDEVICE:STATE", "Idle")
+	pipe.set("RFSYSTEM:STATE", "Free")
 
 	pipe.execute()
 	pass

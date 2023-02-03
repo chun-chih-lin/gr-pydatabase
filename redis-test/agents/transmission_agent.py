@@ -41,6 +41,11 @@ class TransAgent(object):
 		self.KEYWORD_IDLE = "Idle"
 		self.KEYWORD_STOP = "Stop"
 		self.KEYWORD_WAIT_ACK = "WAITACK"
+
+		self.SYSTEM_STATE = "RFSYSTEM:STATE"
+		self.SYSTEM_FREE = "Free"
+		self.SYSTEM_TRANS_HOLD = "Hold"
+
 		
 		print('Initialization done.')
 
@@ -72,6 +77,7 @@ class TransAgent(object):
 
 	def event_handler(self, msg):
 		try:
+			print(f'[Trans] Event! {msg}')
 			# key should be 'TRANSMISSION'
 			key = self.utf8_decode(msg["channel"])
 			if key:
@@ -93,7 +99,6 @@ class TransAgent(object):
 		# Trigger the RF front-end to transmit
 		print(f'=================== Transmitting Trans:{db_key}...')
 		p.set(f'Trans:{db_key}', PMDU_msg)
-		# p.sadd(self.KEYWORD_WAIT_ACK, db_key)
 		p.set(self.MONITOR_ACK, self.ACK_STATE_WAIT)
 		p.execute()
 
@@ -110,7 +115,10 @@ class TransAgent(object):
 		waiting_interval = 0.001
 
 		while retry_count < self.RETRY_MAX:
-			if self.db.get(self.MONITOR_ACK).decode("utf-8") != self.ACK_STATE_WAIT:
+			if self.db.get(self.SYSTEM_STATE).decode('utf-8') == self.SYSTEM_TRANS_HOLD:
+				print('System holds')
+				time.sleep(0.01)
+			elif self.db.get(self.MONITOR_ACK).decode("utf-8") != self.ACK_STATE_WAIT:
 				print(f'[Trans Agent] {self.db.get(self.MONITOR_ACK).decode("utf-8")}')
 				# It must receive the ACK
 				return
@@ -127,7 +135,6 @@ class TransAgent(object):
 				p = self.db.pipeline()
 				p.delete(f'Trans:{db_key}')
 				p.set(f'Trans:{db_key}', PMDU_msg)
-				# p.sadd(self.KEYWORD_WAIT_ACK, db_key)
 				p.execute()
 			pass
 		pass
@@ -140,7 +147,6 @@ class TransAgent(object):
 		p = self.db.pipeline()
 		p.set("RECEPTION", db_key)
 		p.set(key_ack, "Failed")
-		# p.srem(self.KEYWORD_WAIT_ACK, db_key)
 		p.set(self.REDEVICE_STATE, self.KEYWORD_IDLE)
 		p.set(self.MONITOR_ACK, self.ACK_STATE_FAIL)
 		p.rpop('QUEUE:LIST:TRANS')

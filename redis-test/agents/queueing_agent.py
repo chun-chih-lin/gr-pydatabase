@@ -62,12 +62,9 @@ class QueueAgent(object):
 
 	def event_handler(self, msg):
 		try:
-			# key should be 'LISTTEST'
-			print(f'[Queue] msg: {msg["channel"]}')
 			key = self.utf8_decode(msg["channel"])
 			if key:
 				# get the db_key for transmission information
-				# db_key = key.split(":")[1]
 				db_key = "QUEUE:LIST:TRANS"
 				self.process_message(db_key)
 		except Exception as exp:
@@ -80,14 +77,15 @@ class QueueAgent(object):
 			# While "QUEUE:LIST:TRANS" exist, means there is message needs to be transmitted
 			print(f'[Queue] {self.db.get(self.RFDEVICE_STATE)}')
 			rf_device_state = self.utf8_decode(self.db.get(self.RFDEVICE_STATE))
+			
 			if rf_device_state == self.KEYWORD_IDLE:
 				# There are some keys in the queue and the RF is Idle.
 				oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
-				
 				# Trigger the Transmission Agent to transmit
 				# Set the state of RF as Busy
 				p = self.db.pipeline()
 				# Tell the transmission agent which key to be transmitted
+				# print(f'Tell transmission agent to trans {oldest_key}')
 				p.set(self.KEYWORD_TRANS, oldest_key)
 				# Set rf device to Busy
 				p.set(self.RFDEVICE_STATE, self.KEYWORD_BUSY)
@@ -95,9 +93,7 @@ class QueueAgent(object):
 			else:
 				print('[Queue] Still processing, sleep for 0.001 second.')
 				time.sleep(0.001)
-			pass
-		pass
-		print('Done processing all the msg in queue')
+			print('Done processing all the msg in queue')
 
 def main():
 	QueueAgent('QUEUE:LIST:TRANS', 'AGENT:QUEUE')

@@ -14,7 +14,7 @@ Loop_MAX = 1000
 # The maximum MSDU is 1500 bytes before encryption.
 MSDU_MAX = 200
 
-print(f'len input: {len(sys.argv)}')
+# print(f'len input: {len(sys.argv)}')
 
 input_c = len(sys.argv)
 
@@ -64,16 +64,14 @@ def generate_MSDU(idx, seq_id, Message, sleep_bw_pkt, Loop_MAX):
         MSDU["data"] = "".join(random.choice(string.ascii_letters) for x in range(MSDU_MAX - length_remain))
     else:
         MSDU["data"] = Message
-    print(f"MSDU_MAX - length_remain = {MSDU_MAX} - {length_remain} = {MSDU_MAX - length_remain}")
-    print(f"\nSending data: {MSDU['data']}.....\n")
+    # print(f"MSDU_MAX - length_remain = {MSDU_MAX} - {length_remain} = {MSDU_MAX - length_remain}")
+    print(f"\nSending data: {MSDU['data']}.....")
     return json.dumps(MSDU, separators=(',', ':'))
-    pass
 
 def run_without_pipeline(seq_id, Message, sleep_bw_pkt, Loop_MAX):
     start_time = time.time()
     for x in range(Loop_MAX):
         set_value = generate_MSDU(x, seq_id, Message, sleep_bw_pkt, Loop_MAX)
-        # r.set("Trans:"+str(x), set_value)
         action_key = "Single:Trans:"+str(x)
         r.delete(action_key)
         r.set(action_key, set_value)
@@ -98,7 +96,6 @@ def run_with_pipeline(seq_id, Message, sleep_bw_pkt, Loop_MAX):
     print("list: ", r.smembers("QUEUE:LIST:TRANS"))
 
 def main():
-    #r.flushall()
     seq_id, Message, sleep_bw_pkt, Loop_MAX = parse_arg()
 
     print("Start transmitting packets...")
