@@ -209,13 +209,21 @@ class redis_sink(gr.sync_block):
                 is_for_me, header_info, frame_type = parse_header(pmt_vector)
                 self.msg_debug(f'Receive a type: {header_info["type"]} frame')
                 if is_for_me:
+                    real_csi = meta['csi'].real.tolist()
+                    imag_csi = meta['csi'].imag.tolist()
+                    meta.pop('csi', None)
+                    meta['real'] = real_csi
+                    meta['imag'] = imag_csi
+
+                    csi_dict = dict()
+                    csi_dict['real'] = real_csi
+                    csi_dict['imag'] = imag_csi
+                    csi_json = json.dumps(csi_dict)
+                    timestamp = str(time.time())
+                    self.pipeline.set(f"CSI:{timestamp}", csi_json)
+                    self.pipeline.set("SYSTEM:ACTION:CSI", f"CSI:{timestamp}")
+
                     if header_info['type'] == self.FRMAE_DATA:
-                        real_csi = meta['csi'].real.tolist()
-                        imag_csi = meta['csi'].imag.tolist()
-                        meta.pop('csi', None)
-                        self.detect_interference_by_csi(real_csi, imag_csi)
-                        meta['real'] = real_csi
-                        meta['imag'] = imag_csi
                         info_json = json.dumps(meta)
                         self.msg_debug(f'It is for me. header_info["type"]: {header_info["type"]}')
                         self.msg_debug(f'It is for me. header_info["subtype"]: {header_info["subtype"]}')
@@ -224,6 +232,7 @@ class redis_sink(gr.sync_block):
                         self.reply_with_ack(header_info['addr2'])
                         self.set_to_db(payload, info_json)
                     else:
+                        # Someone just replied a ACK to me
                         if header_info['type'] == self.FRMAE_CTRL and header_info['subtype'] == 13:
                             self.action_to_ack()
                 else:
@@ -234,9 +243,6 @@ class redis_sink(gr.sync_block):
         self.pipeline.execute()
         self.pipeline.reset()
         pass
-	
-    def detect_interference_by_csi(self, csi_r, csi_i):
-        self.msg_debug('detecting interference by CSI...')
 
     def action_to_ack(self):
         ACK_status = self.redis_db.get(self.MONITOR_ACK)

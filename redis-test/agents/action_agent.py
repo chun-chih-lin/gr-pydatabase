@@ -5,6 +5,7 @@ import time
 import json
 import random
 import string
+import sys, os
 
 class ActionAgent(object):
 	def __init__(self, subprefix, agentkey):
@@ -43,6 +44,8 @@ class ActionAgent(object):
 		self.SYSTEM_FREE = "Free"
 		self.SYSTEM_TRANS_HOLD = "Hold"
 
+		self.MAX_CSI_RECORD = 5
+
 		print('Initialization done.')
 	
 	def check_notify(self):
@@ -67,14 +70,44 @@ class ActionAgent(object):
 	def event_handler(self, msg):
 		try:
 			print(f'[Action] Event! {msg}')
-
+			action = self.get_action(msg)
+			if action == "CSI":
+				csi_key = self.db.get("SYSTEM:ACTION:CSI").decode("utf-8")
+				timestamp = csi_key.split(":")[1]
+				newest_key = self.db.lrange("SYSTEM:CSI:QUEUE", 0, 0)
+				if len(newest_key) < 1:
+					self.db.lpush("SYSTEM:CSI:QUEUE", csi_key)
+				elif self.is_newer_csi(csi_key, newest_key[0].decode("utf-8")):
+					self.db.lpush("SYSTEM:CSI:QUEUE", csi_key)
+					if len(self.db.lrange("SYSTEM:CSI:QUEUE", 0, -1)) > self.MAX_CSI_RECORD:
+						oldest_csi_key = self.db.rpop("SYSTEM:CSI:QUEUE")
+						self.db.delete(oldest_csi_key)
+						# We have enough CSI in the Queue, try to detect the interference.
+						self.detect_interference()
+				else:
+					# The key is older somehow. Discard it.
+					self.db.delete(csi_key)
+			else:
+				print(f"Other action: {aciton}.")
+				
 		except Exception as exp:
-			print(f'[Action] Exception occurs: {exp}')
+			e_type, e_obj, e_tb = sys.exc_info()
+			print(f'[Action] Exception occurs: {exp}. At line {e_tb.tb_lineno}')
+	
+	def is_newer_csi(self, coming_key, newest_key):
+		return float(coming_key.split(":")[1]) > float(newest_key.split(":")[1])
+
+	def get_action(self, msg):
+		return self.utf8_decode(msg['channel']).split(":")[3]
+
+	#--------------------------------------------------------------------------------
+	def detect_interference(self):
+		print('[Action] Detecting interference...')
 
 
 def main():
 	print('Running Action Agent...')
-	ActionAgent('ACTION', 'AGENT:ACTION')
+	ActionAgent('SYSTEM:ACTION:*', 'AGENT:ACTION')
 
 if __name__ == "__main__":
 	main()
