@@ -139,7 +139,9 @@ class ActionAgent(object):
 		return median_max_detection
 
 	def consecutive_detect(self, detections):
-		consecutive_detection = [a*b for (a, b) in zip(detections[:-1], detections[2:])]
+		print(f'{len(detections[:-1])}')
+		print(f'{len(detections[1:])}')
+		consecutive_detection = [a*b for (a, b) in zip(detections[:-1], detections[1:])]
 		return consecutive_detection
 
 
@@ -149,6 +151,7 @@ class ActionAgent(object):
 		# TODO: Setting should be set in db for dynamic changes
 		self.sliding_window_size = 4
 		self.median_threshold = 5.0
+		self.consecutive_threshold = 3
 
 		FAILRED = '\033[91m'
 		OKGREEN = '\033[92m'
@@ -156,10 +159,25 @@ class ActionAgent(object):
 		EOC = '\033[0m'
 		csi_list = self.get_all_csi_in_db()
 
+		print(f'{len(csi_list)}')
+
 		sliding_var_detect_csis = self.sliding_var_detect(csi_list)
 		detections = self.median_max_detect(sliding_var_detect_csis)
+		print(f'detections: {detections}')
 		consecutive_detection = self.consecutive_detect(detections)
 		print(f'consecutive_detection: {consecutive_detection}')
+
+		if sum(consecutive_detection) >= self.consecutive_threshold:
+			print(f'Too many detected! ({sum(consecutive_detection)}/{len(consecutive_detection)}) Interference detected!')
+			print('Hold the system and try to initiate to jump to another frequency with the receiver.')
+			print('Hold the transmission process')
+			self.db.set(self.SYSTEM_STATE, self.SYSTEM_TRANS_HOLD)
+
+			
+
+			print('Free the system from hold.')
+			self.db.set(self.SYSTEM_STATE, self.SYSTEM_FREE)
+
 
 		
 
