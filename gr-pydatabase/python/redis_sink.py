@@ -104,7 +104,7 @@ class redis_sink(gr.sync_block):
             frame_type = int(frame_ctrl_bin[4:6], 2)
             version = int(frame_ctrl_bin[6:], 2)
 
-            frame_type_str = get_type(frame_type, frame_subtype)
+            frame_type_str, frame_subtype_str = get_type(frame_type, frame_subtype)
             duration = int(header_vector[2] + header_vector[3])
 
             addr1 = ":".join(["{:02x}".format(int(i, 16)) for i in hex_list[4:10]])
@@ -119,6 +119,8 @@ class redis_sink(gr.sync_block):
             header_dict["addr1"] = addr1        # Receiver
             header_dict["addr2"] = addr2        # Sender
             header_dict["addr3"] = addr3        # Filtering
+			header_dict["type_str"] = frame_type_str
+			header_dict["subtype_str"] = frame_subtype_str
 
             # header_json = json.dumps(header_dict)
             return check_dest(addr1), header_dict, frame_type_str
@@ -220,18 +222,16 @@ class redis_sink(gr.sync_block):
                     csi_dict['real'] = real_csi
                     csi_dict['imag'] = imag_csi
                     csi_json = json.dumps(csi_dict)
-                    timestamp = str(time.time())
-                    self.pipeline.set(f"CSI:{timestamp}", csi_json)
-                    self.pipeline.set("SYSTEM:ACTION:CSI", f"CSI:{timestamp}")
 
                     if header_info['type'] == self.FRMAE_DATA:
                         info_json = json.dumps(meta)
+                        csi_json = json.dumps(csi_dict)
                         self.msg_debug(f'It is for me. header_info["type"]: {header_info["type"]}')
                         self.msg_debug(f'It is for me. header_info["subtype"]: {header_info["subtype"]}')
                         # Only write the data to db if it is a DATA frame
                         self.msg_debug(f'Receive a DATA frame')
                         self.reply_with_ack(header_info['addr2'])
-                        self.set_to_db(payload, info_json)
+                        self.set_to_db(payload, info_json, csi_json)
                     else:
                         # Someone just replied a ACK to me
                         if header_info['type'] == self.FRMAE_CTRL and header_info['subtype'] == 13:
@@ -270,7 +270,7 @@ class redis_sink(gr.sync_block):
         self.sock.sendto(bytes(ack_frame), ("127.0.0.1", 52001))
         pass
 
-    def set_to_db(self, payload, info_json):
+    def set_to_db(self, payload, info_json, csi_json):
         # self.msg_debug("[gr-pydatabase] Parsing the payload and set the information to db...")
         try:
             seq = json.loads(payload)['sequence']
@@ -281,6 +281,10 @@ class redis_sink(gr.sync_block):
                 self.msg_debug(f'[Redis_sink] key {set_key+":*"}, Already in db')
             else:
                 self.pipeline.hmset(f'Recv:{seq}:{str(time.time())}', {'payload': payload, 'info': info_json})
+
+            timestamp = str(time.time())
+            self.pipeline.set(f'CSI:{timestamp}', csi_json)
+            self.pipeline.set("SYSTEM:ACTION:CSI", f'CSI:{timestamp}')
         except Exception as exp:
             self.msg_debug(f'[Redis_sink] Exception: set_to_db {exp}')
             self.msg_debug(f'[Redis_sink] Exception: payload:\n', payload, '\ninfo:\n', info_json)
