@@ -206,10 +206,21 @@ class redis_sink(gr.sync_block):
             if pmt.is_u8vector(vector):
                 vector = pmt.u8vector_elements(vector)
                 payload = "".join([chr(r) for r in vector[24:]])
+                payload_dict = json.loads(payload)
+                if payload_dict.get('ControlType') is not None:
+                    # It is a control data frame.
+                    if payload_dict['ControlType'] == "HOP":
+                        #tryto hop to new freq and check if the link is stable
+                        hopping_freq = payload_dict["ControlAction"]
+                        self.msg_debug(f'It is a frequency hopping control frame. Hop to {hopping_freq}')
+                        return
+
+                self.msg_debug('If it is a ControlType frame, this line should not be executed')
 
                 ### header_info: for future used as indication for the receiver and transmitter
                 is_for_me, header_info, frame_type = parse_header(pmt_vector)
                 self.msg_debug(f'header_info: \n{header_info}')
+                self.msg_debug(f'payload: {payload}')
                 self.msg_debug(f'Receive a type: {header_info["type"]} frame')
                 if is_for_me:
                     real_csi = meta['csi'].real.tolist()
