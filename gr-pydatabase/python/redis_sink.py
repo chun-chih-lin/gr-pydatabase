@@ -119,8 +119,8 @@ class redis_sink(gr.sync_block):
             header_dict["addr1"] = addr1        # Receiver
             header_dict["addr2"] = addr2        # Sender
             header_dict["addr3"] = addr3        # Filtering
-			header_dict["type_str"] = frame_type_str
-			header_dict["subtype_str"] = frame_subtype_str
+            header_dict["type_str"] = frame_type_str
+            header_dict["subtype_str"] = frame_subtype_str
 
             # header_json = json.dumps(header_dict)
             return check_dest(addr1), header_dict, frame_type_str
