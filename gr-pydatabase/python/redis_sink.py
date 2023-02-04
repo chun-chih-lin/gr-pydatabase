@@ -207,6 +207,7 @@ class redis_sink(gr.sync_block):
 
                 ### header_info: for future used as indication for the receiver and transmitter
                 is_for_me, header_info, frame_type = parse_header(pmt_vector)
+                self.msg_debug(f'header_info: \n{header_info}')
                 self.msg_debug(f'Receive a type: {header_info["type"]} frame')
                 if is_for_me:
                     real_csi = meta['csi'].real.tolist()
