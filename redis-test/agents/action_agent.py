@@ -6,6 +6,8 @@ import json
 import random
 import string
 import sys, os
+import socket
+import scapy.all as scapy
 
 class ActionAgent(object):
 	def __init__(self, subprefix, agentkey):
@@ -22,6 +24,8 @@ class ActionAgent(object):
 		self.agentpattern = f'__keyspace@{self.db_idx}__:{self.agentkey}'
 
 		self.check_notify()
+
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 		self.pubsub = self.db.pubsub()
 		self.pubsub.psubscribe(**{self.subpattern: self.event_handler})
@@ -173,7 +177,8 @@ class ActionAgent(object):
 			print('Hold the transmission process')
 			self.db.set(self.SYSTEM_STATE, self.SYSTEM_TRANS_HOLD)
 
-			
+			#ctrl_frame = scapy.
+			#self.sock.sendto(bytes(ctrl_frame), ("127.0.0.1", 52001))
 
 			print('Free the system from hold.')
 			self.db.set(self.SYSTEM_STATE, self.SYSTEM_FREE)
