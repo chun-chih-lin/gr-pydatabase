@@ -40,6 +40,21 @@ $ pip install --pre scapy[basic]
 ```
 
 ## hiredis for C Language
+Reference: https://github.com/redis/hiredis/issues/1149  
+1. Clone hiredis
+```
+git clone https://github.com/redis/hiredis.git && cd hiredis
+```
+2. Build the project clean
+```
+git checkout v1.1.0 && make clean && make && sudo make install
+```
+3. Link the project
+```
+ldconfig
+```
+
+__Obsolete__
 1. Clone hiredis
 ```
 $ git clone https://github.com/redis/hiredis.git
