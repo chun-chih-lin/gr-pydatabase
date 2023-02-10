@@ -73,26 +73,36 @@ class ActionAgent(object):
 
 	def event_handler(self, msg):
 		try:
-			print(f'[Action] Event! {msg}')
+			# print(f'[Action] Event! {msg}')
 			action = self.get_action(msg)
 			if action == "CSI":
 				csi_key = self.db.get("SYSTEM:ACTION:CSI").decode("utf-8")
 				timestamp = csi_key.split(":")[1]
 				newest_key = self.db.lrange("SYSTEM:CSI:QUEUE", 0, 0)
-				if len(newest_key) < 1:
+				newest_key = [k.decode("utf-8") for k in newest_key]
+				if csi_key in newest_key:
+					print('key is already in the queue. Skip it.')
+					pass
+				elif len(newest_key) < 1:
 					self.db.lpush("SYSTEM:CSI:QUEUE", csi_key)
-				elif self.is_newer_csi(csi_key, newest_key[0].decode("utf-8")):
+				elif self.is_newer_csi(csi_key, newest_key[0]):
 					self.db.lpush("SYSTEM:CSI:QUEUE", csi_key)
 					if len(self.db.lrange("SYSTEM:CSI:QUEUE", 0, -1)) > self.MAX_CSI_RECORD:
 						oldest_csi_key = self.db.rpop("SYSTEM:CSI:QUEUE")
+						print(f'Adding new key: {csi_key}. Delete oldest key: {oldest_csi_key}')
+						print(f'*** db.delete({oldest_csi_key})')
 						self.db.delete(oldest_csi_key)
 						# We have enough CSI in the Queue, try to detect the interference.
 						self.detect_interference()
 				else:
 					# The key is older somehow. Discard it.
+					print(f'incoming key: {csi_key} is older somehow, discard it.')
+					print(f'keys in queue: {newest_key}')
+					print(f'*** db.delete({csi_key})')
 					self.db.delete(csi_key)
 			elif action == "DEBUG":
-				self.detect_interference()
+				# SYSTEM:ACTION:DEBUG
+				self.detect_interference(debug=True)
 			else:
 				print(f"Other action: {aciton}.")
 				
@@ -109,13 +119,18 @@ class ActionAgent(object):
 	#--------------------------------------------------------------------------------
 	# For Action: Detecting Interference
 	def get_all_csi_in_db(self):
-		csi_keys_list = self.db.lrange("SYSTEM:CSI:QUEUE", 0, -1)
-		csi_list = []
-		for csi_key in csi_keys_list:
-			csi_json_str = self.db.get(csi_key).decode('utf-8')
-			csi_json = json.loads(csi_json_str)
-			csi = np.array(csi_json['real']) + 1j*np.array(csi_json['imag'])
-			csi_list.append(csi)
+		try:
+			csi_keys_list = self.db.lrange("SYSTEM:CSI:QUEUE", 0, -1)
+			csi_list = []
+			for csi_key in csi_keys_list:
+				print(f'csi_key: {csi_key}')
+				csi_json_str = self.db.get(csi_key).decode('utf-8')
+				csi_json = json.loads(csi_json_str)
+				csi = np.array(csi_json['real']) + 1j*np.array(csi_json['imag'])
+				csi_list.append(csi)
+		except Exception as exp:
+			_, _, e_tb = sys.exc_info()
+			print(f'[Action] get_all_csi_in_db: {exp}. At line {e_tb.tb_lineno}')
 		return np.array(csi_list)
 
 	def sliding_var_detect(self, csis):
@@ -143,13 +158,11 @@ class ActionAgent(object):
 		return median_max_detection
 
 	def consecutive_detect(self, detections):
-		print(f'{len(detections[:-1])}')
-		print(f'{len(detections[1:])}')
 		consecutive_detection = [a*b for (a, b) in zip(detections[:-1], detections[1:])]
 		return consecutive_detection
 
 
-	def detect_interference(self):
+	def detect_interference(self, debug=False):
 		print('[Action] Detecting interference...')
 
 		# TODO: Setting should be set in db for dynamic changes
@@ -171,7 +184,9 @@ class ActionAgent(object):
 		consecutive_detection = self.consecutive_detect(detections)
 		print(f'consecutive_detection: {consecutive_detection}')
 
-		if sum(consecutive_detection) >= self.consecutive_threshold:
+		print(f'sum: {sum(consecutive_detection)}, threshold: {self.consecutive_threshold}, debug: {debug}')
+
+		if sum(consecutive_detection) >= self.consecutive_threshold or debug:
 			print(f'Too many detected! ({sum(consecutive_detection)}/{len(consecutive_detection)}) Interference detected!')
 			print('Hold the system and try to initiate to jump to another frequency with the receiver.')
 			print('Hold the transmission process')
@@ -179,7 +194,10 @@ class ActionAgent(object):
 
 			#ctrl_frame = scapy.
 			#self.sock.sendto(bytes(ctrl_frame), ("127.0.0.1", 52001))
-
+			if debug:
+				print('Sleep for 5 second as debugging')
+				time.sleep(5)
+				print('Resumming the system')
 			print('Free the system from hold.')
 			self.db.set(self.SYSTEM_STATE, self.SYSTEM_FREE)
 
