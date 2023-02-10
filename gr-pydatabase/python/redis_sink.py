@@ -193,65 +193,67 @@ class redis_sink(gr.sync_block):
 
         # Check if pdu is PDU
         # self.msg_debug("[gr-pydatabase] Check if pdu is PDU...")
-        if pmt.is_pair(pdu):
-            # self.msg_debug("[gr-pydatabase] It is a PDU!")
-            meta = pmt.to_python(pmt.car(pdu))
-            if meta is None:
-                meta = dict()
+        try:
+            if pmt.is_pair(pdu):
+                # self.msg_debug("[gr-pydatabase] It is a PDU!")
+                meta = pmt.to_python(pmt.car(pdu))
+                if meta is None:
+                    meta = dict()
 
-            vector = pmt.cdr(pdu)
-            pmt_vector = pmt.to_python(vector)
-            payload = ""
+                vector = pmt.cdr(pdu)
+                pmt_vector = pmt.to_python(vector)
+                payload = ""
 
-            if pmt.is_u8vector(vector):
-                vector = pmt.u8vector_elements(vector)
-                payload = "".join([chr(r) for r in vector[24:]])
-                payload_dict = json.loads(payload)
-                if payload_dict.get('ControlType') is not None:
-                    # It is a control data frame.
-                    if payload_dict['ControlType'] == "HOP":
-                        #tryto hop to new freq and check if the link is stable
-                        hopping_freq = payload_dict["ControlAction"]
-                        self.msg_debug(f'It is a frequency hopping control frame. Hop to {hopping_freq}')
-                        return
+                if pmt.is_u8vector(vector):
+                    vector = pmt.u8vector_elements(vector)
+                    payload = "".join([chr(r) for r in vector[24:]])
+                    payload_dict = json.loads(payload)
+                    if payload_dict.get('ControlType') is not None:
+                        # It is a control data frame.
+                        if payload_dict['ControlType'] == "HOP":
+                            #tryto hop to new freq and check if the link is stable
+                            hopping_freq = payload_dict["ControlAction"]
+                            self.msg_debug(f'It is a frequency hopping control frame. Hop to {hopping_freq}')
+                            return
 
-                self.msg_debug('If it is a ControlType frame, this line should not be executed')
+                    self.msg_debug('If it is a ControlType frame, this line should not be executed')
 
-                ### header_info: for future used as indication for the receiver and transmitter
-                is_for_me, header_info, frame_type = parse_header(pmt_vector)
-                self.msg_debug(f'header_info: \n{header_info}')
-                self.msg_debug(f'payload: {payload}')
-                self.msg_debug(f'Receive a type: {header_info["type"]} frame')
-                if is_for_me:
-                    real_csi = meta['csi'].real.tolist()
-                    imag_csi = meta['csi'].imag.tolist()
-                    meta.pop('csi', None)
-                    meta['real'] = real_csi
-                    meta['imag'] = imag_csi
+                    ### header_info: for future used as indication for the receiver and transmitter
+                    is_for_me, header_info, frame_type = parse_header(pmt_vector)
+                    self.msg_debug(f'header_info: \n{header_info}')
+                    self.msg_debug(f'payload: {payload}')
+                    self.msg_debug(f'Receive a type: {header_info["type"]} frame')
+                    if is_for_me:
+                        real_csi = meta['csi'].real.tolist()
+                        imag_csi = meta['csi'].imag.tolist()
+                        meta.pop('csi', None)
+                        meta['real'] = real_csi
+                        meta['imag'] = imag_csi
 
-                    csi_dict = dict()
-                    csi_dict['real'] = real_csi
-                    csi_dict['imag'] = imag_csi
-                    csi_json = json.dumps(csi_dict)
-
-                    if header_info['type'] == self.FRMAE_DATA:
-                        info_json = json.dumps(meta)
+                        csi_dict = dict()
+                        csi_dict['real'] = real_csi
+                        csi_dict['imag'] = imag_csi
                         csi_json = json.dumps(csi_dict)
-                        self.msg_debug(f'It is for me. header_info["type"]: {header_info["type"]}')
-                        self.msg_debug(f'It is for me. header_info["subtype"]: {header_info["subtype"]}')
-                        # Only write the data to db if it is a DATA frame
-                        self.msg_debug(f'Receive a DATA frame')
-                        self.reply_with_ack(header_info['addr2'])
-                        self.set_to_db(payload, info_json, csi_json)
+
+                        if header_info['type'] == self.FRMAE_DATA:
+                            info_json = json.dumps(meta)
+                            csi_json = json.dumps(csi_dict)
+                            self.msg_debug(f'It is for me. header_info["type"]: {header_info["type"]}')
+                            self.msg_debug(f'It is for me. header_info["subtype"]: {header_info["subtype"]}')
+                            # Only write the data to db if it is a DATA frame
+                            self.msg_debug(f'Receive a DATA frame')
+                            self.reply_with_ack(header_info['addr2'])
+                            self.set_to_db(payload, info_json, csi_json)
+                        else:
+                            # Someone just replied a ACK to me
+                            if header_info['type'] == self.FRMAE_CTRL and header_info['subtype'] == 13:
+                                self.action_to_ack()
                     else:
-                        # Someone just replied a ACK to me
-                        if header_info['type'] == self.FRMAE_CTRL and header_info['subtype'] == 13:
-                            self.action_to_ack()
-                else:
-                    # The destination is not me. Discard the received pkt.
-                    # self.msg_debug('header_info:\n', header_info)
-                    self.msg_debug(f'It is not for me. Send to {header_info["addr1"]}, I\'m {self.macaddr}')
-                    pass
+                        # The destination is not me. Discard the received pkt.
+                        # self.msg_debug('header_info:\n', header_info)
+                        self.msg_debug(f'It is not for me. Send to {header_info["addr1"]}, I\'m {self.macaddr}')
+        except Exception as exp:
+            print(f'[redis sink] Exception: {exp}')
         self.pipeline.execute()
         self.pipeline.reset()
         pass
