@@ -34,12 +34,23 @@ def display_results(msgs):
     print("==============================================================")
     print(f'{str_id:>3}/{str_ttl:<10} {str_seq:<10} {str_data:<34}')
     print("--------------------------------------------------------------")
+    recv_pkt = 0
+    last_idx = 0
     for message in msgs:
         idx, ttl, seq, timestamp, data = message
         print(f'{idx+1:>3}/{ttl:<10} {seq:<10} {data[0:show_data_len]}', end='')
+		
+        if idx < last_idx:
+            print(f"--- Reception Rate: {recv_pkt/ttl*100:.2f}")
+            recv_pkt = 0
+        else:
+            recv_pkt += 1
+
         if len(data) > show_data_len:
             print('...', end='')
         print('')
+        last_idx = idx
+    print(f"--- Reception Rate: {recv_pkt/ttl*100:.2f}")
     pass
 
 def main():
