@@ -36,7 +36,7 @@ if input_c >= 5:
 r, subprefix = utils.redis_setup(db_host='localhost', db_port=6379, db_ch='channel_1', db_idx=0)
 
 def parse_arg():
-    DEFAULT_N_PKT = 1
+    DEFAULT_N_PKT = 10
     DEFAULT_INTERVAL = 0.001
 
     parser = argparse.ArgumentParser(description="This script is the interface between user and the RF front-end.")

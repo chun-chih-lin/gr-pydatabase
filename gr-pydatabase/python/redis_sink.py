@@ -211,9 +211,13 @@ class redis_sink(gr.sync_block):
                     if payload_dict.get('ControlType') is not None:
                         # It is a control data frame.
                         if payload_dict['ControlType'] == "HOP":
+                            print("Hold the system until hopping is completed")
+                            self.redis_db.set("RFSYSTEM:STATE", "Hold")
                             #tryto hop to new freq and check if the link is stable
                             hopping_freq = payload_dict["ControlAction"]
                             self.msg_debug(f'It is a frequency hopping control frame. Hop to {hopping_freq}')
+                            print(f"Try to hop to {hopping_freq}")
+                            self.action_to_hop(payload)
                             return
 
                     self.msg_debug('If it is a ControlType frame, this line should not be executed')
@@ -257,6 +261,10 @@ class redis_sink(gr.sync_block):
         self.pipeline.execute()
         self.pipeline.reset()
         pass
+
+    def action_to_hop(self, payload):
+        pass
+
 
     def action_to_ack(self):
         ACK_status = self.redis_db.get(self.MONITOR_ACK)
