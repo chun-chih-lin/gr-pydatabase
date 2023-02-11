@@ -200,7 +200,11 @@ class ActionAgent(object):
 				ctrl_msg = dict()
 				ctrl_msg["ControlType"] = "HOP"
 				ctrl_msg["ControlAction"] = hop_to
+                                ctrl_msg["Role"] = "Follower"
 				json_info = json.dumps(ctrl_msg, separators=(',', ':'))
+                                self.db.hset("SYSTEM:HOPPING", "Role", "Initiator")
+                                self.db.hset("SYSTEM:HOPPING", "Stage", 3)
+                                self.db.hset("SYSTEM:HOPPINg", "Freq", hop_to)
 				self.db.set(key, json_info)
 				
 				print('Sleep for 10 second as debugging')
