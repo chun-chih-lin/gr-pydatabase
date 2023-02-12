@@ -211,10 +211,10 @@ class redis_sink(gr.sync_block):
                     if payload_dict.get('ControlType') is not None:
                         # It is a control data frame.
                         if payload_dict['ControlType'] == "HOP":
+                            # On receiving the hopping request, Stage 4.
                             print("Hold the system until hopping is completed")
                             self.redis_db.set("RFSYSTEM:STATE", "Hold")
                             self.redis_db.hset("SYSTEM:HOPPIONG", "Stage", 4)
-                            #tryto hop to new freq and check if the link is stable
                             self.action_to_hop(payload)
                             return
 
@@ -278,21 +278,23 @@ class redis_sink(gr.sync_block):
 
         if role == "Initiator":
             # I'm initiating the hopping
-            # 1. Reply is holding
             if payload["ControlAction"] == "HOLD:ACK" && stage == 3:
-                # Set to the new frequency and send out the check
+                # Receiving the HOLD:ACK.
+                # Set to the new frequency and send out the check, Stage 7.
                 hop_to = self.redis_db.hget(system_hopping_key, "Freq").decode("utf-8")
                 p.hset("TuneRF:11", "Freq", hop_to)
                 p.hset("TuneRF:11", "Gain", 0.4)
                 p.hset(system_hopping_key, "Stage", 7)
                 p.execute()
                 p.reset()
+                # Using the new frequency to send confirmation, Stage 8.
                 msg["ControlAction"] = "NEW:FREQ"
                 self.redis_db.set(hopping_key, json.dumps(msg))
                 self.redis_db.hset(system_hopping_key, "Stage", 8)
                 return
             elif payload["ControlAction"] == "NEW:FREQ:ACK" && stage == 8:
-
+                # Receiving the ACK on new frequency, Stage 10.
+                # Free the system
                 p.set("RFSYSTEM:STATE", "Free")
                 return
 
@@ -300,13 +302,13 @@ class redis_sink(gr.sync_block):
         else:
             # I'm following the hopping
             if stage == 4:
-                # 2. Receiving "HOLD:ACK"
+                # Reply with HOLD:ACK by using the old frequency, Stage 5.
                 msg["ControlAction"] = "HOLD:ACK"
                 p.set(hopping_key, json.dumps(msg))
                 p.hset(system_hopping_key, "Stage", 5)
                 p.execute()
                 p.reset()
-                # Set the system to the new frequency
+                # Set the system to the new frequency, Stage 6.
                 p.hset("TuneRF:11", 'Freq', payload["ControlAction"])
                 p.hset("TuneRF:11", 'Gain', 0.4)
                 p.hset(system_hopping_key, "Stage", 6)
@@ -315,6 +317,7 @@ class redis_sink(gr.sync_block):
                 p.reset()
                 return
             elif stage == 6:
+                # Receiving the confirmation at new frequency, reply ACK, Stage 9.
                 msg["ControlAction"] = "NEW:FREQ:ACK"
                 p.set(hopping, json.dumps(msg))
                 p.hset(system_hopping_key, "Stage", 9)
