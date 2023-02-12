@@ -194,25 +194,24 @@ class ActionAgent(object):
 
 			#ctrl_frame = scapy.
 			#self.sock.sendto(bytes(ctrl_frame), ("127.0.0.1", 52001))
-			if debug:
-				hopping_key = "Trans:FREQ:HOP"
-				hop_to = "2442000000"
-				ctrl_msg = dict()
-				ctrl_msg["ControlType"] = "HOP"
-				ctrl_msg["ControlAction"] = hop_to
-                                ctrl_msg["Role"] = "Follower"
-				json_info = json.dumps(ctrl_msg, separators=(',', ':'))
-                                self.db.hset("SYSTEM:HOPPING", "Role", "Initiator")
-                                self.db.hset("SYSTEM:HOPPING", "Stage", 3)
-                                self.db.hset("SYSTEM:HOPPINg", "Freq", hop_to)
-				self.db.set(key, json_info)
+			hopping_key = "Trans:FREQ:HOP"
+			hop_to = "2442000000"
+			ctrl_msg = dict()
+			ctrl_msg["ControlType"] = "HOP"
+			ctrl_msg["ControlAction"] = hop_to
+                        ctrl_msg["Role"] = "Follower"
+                        json_info = json.dumps(ctrl_msg, separators=(',', ':'))
+                        self.db.hset("SYSTEM:HOPPING", "Role", "Initiator")
+                        self.db.hset("SYSTEM:HOPPING", "Stage", 3)
+                        self.db.hset("SYSTEM:HOPPINg", "Freq", hop_to)
+                        self.db.set(key, json_info)
 				
-				print('Sleep for 10 second as debugging')
-				time.sleep(10)
-				print('Resuming the system in 1 sec.')
-				time.sleep(1)
-			print('Free the system from hold.')
-			self.db.set(self.SYSTEM_STATE, self.SYSTEM_FREE)
+                        print('Sleep for 10 second as debugging')
+                        time.sleep(10)
+                        print('Resuming the system in 1 sec.')
+                        time.sleep(1)
+                        print('Free the system from hold.')
+                        self.db.set(self.SYSTEM_STATE, self.SYSTEM_FREE)
 
 
 		
