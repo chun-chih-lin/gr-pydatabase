@@ -27,6 +27,8 @@ import time
 import socket
 import scapy.all as scapy
 
+import sys
+
 import numpy
 from gnuradio import gr
 
@@ -207,6 +209,7 @@ class redis_sink(gr.sync_block):
                 if pmt.is_u8vector(vector):
                     vector = pmt.u8vector_elements(vector)
                     payload = "".join([chr(r) for r in vector[24:]])
+                    print(f"payload: {payload}")
                     payload_dict = json.loads(payload)
                     if payload_dict.get('ControlType') is not None:
                         # It is a control data frame.
@@ -255,87 +258,94 @@ class redis_sink(gr.sync_block):
                         # self.msg_debug('header_info:\n', header_info)
                         self.msg_debug(f'It is not for me. Send to {header_info["addr1"]}, I\'m {self.macaddr}')
         except Exception as exp:
-            print(f'[redis sink] Exception: {exp}')
+            e_type, e_obj, e_tb = sys.exc_info()
+            print(f'[redis sink] Exception: {exp}. At line {e_tb.tb_lineno}')
         self.pipeline.execute()
         self.pipeline.reset()
         pass
 
     def action_to_hop(self, payload):
-        hopping_key = "Trans:FREQ:HOP"
-        system_hopping_key = "SYSTEM:HOPPIONG"
-        role = self.redis_db.hget(system_hopping_key, "Role")
-        if role is None:
-            # I must be a follower
-            self.redis_db.hset(system_hopping_key, "Role", payload["Role"])
-            role = payload["Role"]
+        try:
+            hopping_key = "Trans:FREQ:HOP"
+            system_hopping_key = "SYSTEM:HOPPIONG"
+            role = self.redis_db.hget(system_hopping_key, "Role")
+            if role is None:
+                # I must be a follower
+                print(f"I'm a follower: payload = {payload}")
+                self.redis_db.hset(system_hopping_key, "Role", payload["Role"])
+                role = payload["Role"]
 
-        msg = dict()
-        msg["ControlType"] = "HOP"
+            msg = dict()
+            msg["ControlType"] = "HOP"
 
-        stage = self.redis_db.hget(system_hopping_key, "Stage").decode("utf-8")
+            stage = self.redis_db.hget(system_hopping_key, "Stage").decode("utf-8")
 
-        p = self.redis_db.pipeline()
+            p = self.redis_db.pipeline()
 
-        if role == "Initiator":
-            # I'm initiating the hopping
-            if payload["ControlAction"] == "HOLD:ACK" and stage == 3:
-                # Receiving the HOLD:ACK.
-                # Set to the new frequency and send out the check, Stage 7.
-                print(f"hget ({system_hopping_key}, Freq)")
-                hop_to = self.redis_db.hget(system_hopping_key, "Freq").decode("utf-8")
-                p.hset("TuneRF:11", "Freq", hop_to)
-                p.hset("TuneRF:11", "Gain", 0.4)
-                p.hset(system_hopping_key, "Stage", 7)
-                print(f"hset {system_hopping_key} Stage 7")
-                p.execute()
-                p.reset()
-                # Using the new frequency to send confirmation, Stage 8.
-                msg["ControlAction"] = "NEW:FREQ"
-                self.redis_db.set(hopping_key, json.dumps(msg))
-                self.redis_db.hset(system_hopping_key, "Stage", 8)
-                print(f"set {hopping_key}, {json.dumps(msg)}")
-                print(f"hset {system_hopping_key}, Stage 8")
-                return
-            elif payload["ControlAction"] == "NEW:FREQ:ACK" and stage == 8:
-                # Receiving the ACK on new frequency, Stage 10.
-                # Free the system
-                print(f"Receiving the ACK on new frequency, Stage 10.")
-                p.set("RFSYSTEM:STATE", "Free")
-                return
+            if role == "Initiator":
+                # I'm initiating the hopping
+                if payload["ControlAction"] == "HOLD:ACK" and stage == 3:
+                    # Receiving the HOLD:ACK.
+                    # Set to the new frequency and send out the check, Stage 7.
+                    print(f"hget ({system_hopping_key}, Freq)")
+                    hop_to = self.redis_db.hget(system_hopping_key, "Freq").decode("utf-8")
+                    p.hset("TuneRF:11", "Freq", hop_to)
+                    p.hset("TuneRF:11", "Gain", 0.4)
+                    p.hset(system_hopping_key, "Stage", 7)
+                    print(f"hset {system_hopping_key} Stage 7")
+                    p.execute()
+                    p.reset()
+                    # Using the new frequency to send confirmation, Stage 8.
+                    msg["ControlAction"] = "NEW:FREQ"
+                    self.redis_db.set(hopping_key, json.dumps(msg))
+                    self.redis_db.hset(system_hopping_key, "Stage", 8)
+                    print(f"set {hopping_key}, {json.dumps(msg)}")
+                    print(f"hset {system_hopping_key}, Stage 8")
+                    return
+                elif payload["ControlAction"] == "NEW:FREQ:ACK" and stage == 8:
+                    # Receiving the ACK on new frequency, Stage 10.
+                    # Free the system
+                    print(f"Receiving the ACK on new frequency, Stage 10.")
+                    p.set("RFSYSTEM:STATE", "Free")
+                    return
 
 
-        else:
-            # I'm following the hopping
-            if stage == 4:
-                pre_freq = self.redis_db.get("SYSTEM:FREQ").decode("utf-8")
-                # Reply with HOLD:ACK by using the old frequency, Stage 5.
-                print(f"get SYSTEM:FREQ: {pre_freq}")
-                msg["ControlAction"] = "HOLD:ACK"
-                p.set(hopping_key, json.dumps(msg))
-                p.hset(system_hopping_key, "Stage", 5)
-                print(f"hset {system_hopping_key} Stage 5")
-                p.execute()
-                p.reset()
-                # Set the system to the new frequency, Stage 6.
-                p.hset("TuneRF:11", 'Freq', payload["ControlAction"])
-                p.hset("TuneRF:11", 'Gain', 0.4)
-                p.hset(system_hopping_key, "Stage", 6)
-                p.hset(system_hopping_key, "PreFreq", pre_freq)
-                p.hset(system_hopping_key, "Freq", payload["ControlAction"])
-                print(f"hset {system_hopping_key} Stage 6")
-                print(f"hset {system_hopping_key} PreFreq {pre_freq}")
-                print(f"hset {system_hopping_key} Freq, {payload['ControlAction']}")
-                p.execute()
-                p.reset()
-                return
-            elif stage == 6:
-                # Receiving the confirmation at new frequency, reply ACK, Stage 9.
-                msg["ControlAction"] = "NEW:FREQ:ACK"
-                p.set(hopping, json.dumps(msg))
-                p.hset(system_hopping_key, "Stage", 9)
-                p.execute()
-                p.reset()
-                return
+            else:
+                # I'm following the hopping
+                if stage == 4:
+                    pre_freq = self.redis_db.get("SYSTEM:FREQ").decode("utf-8")
+                    # Reply with HOLD:ACK by using the old frequency, Stage 5.
+                    print(f"get SYSTEM:FREQ: {pre_freq}")
+                    msg["ControlAction"] = "HOLD:ACK"
+                    p.set(hopping_key, json.dumps(msg))
+                    p.hset(system_hopping_key, "Stage", 5)
+                    print(f"hset {system_hopping_key} Stage 5")
+                    p.execute()
+                    p.reset()
+                    # Set the system to the new frequency, Stage 6.
+                    p.hset("TuneRF:11", 'Freq', payload["ControlAction"])
+                    p.hset("TuneRF:11", 'Gain', 0.4)
+                    p.hset(system_hopping_key, "Stage", 6)
+                    p.hset(system_hopping_key, "PreFreq", pre_freq)
+                    p.hset(system_hopping_key, "Freq", payload["ControlAction"])
+                    print(f"hset {system_hopping_key} Stage 6")
+                    print(f"hset {system_hopping_key} PreFreq {pre_freq}")
+                    print(f"hset {system_hopping_key} Freq, {payload['ControlAction']}")
+                    p.execute()
+                    p.reset()
+                    return
+                elif stage == 6:
+                    # Receiving the confirmation at new frequency, reply ACK, Stage 9.
+                    msg["ControlAction"] = "NEW:FREQ:ACK"
+                    p.set(hopping, json.dumps(msg))
+                    p.hset(system_hopping_key, "Stage", 9)
+                    p.execute()
+                    p.reset()
+                    return
+        except Exception as exp:
+            _, _, e_tb = sys.exc_info()
+            print(f"[Sink] Action to hop, {exp}, At line {e_tb.tb_lineno}")
+
         pass
 
 
