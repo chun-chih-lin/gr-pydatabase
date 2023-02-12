@@ -281,20 +281,25 @@ class redis_sink(gr.sync_block):
             if payload["ControlAction"] == "HOLD:ACK" && stage == 3:
                 # Receiving the HOLD:ACK.
                 # Set to the new frequency and send out the check, Stage 7.
+                print(f"hget ({system_hopping_key}, Freq)")
                 hop_to = self.redis_db.hget(system_hopping_key, "Freq").decode("utf-8")
                 p.hset("TuneRF:11", "Freq", hop_to)
                 p.hset("TuneRF:11", "Gain", 0.4)
                 p.hset(system_hopping_key, "Stage", 7)
+                print(f"hset {system_hopping_key} Stage 7")
                 p.execute()
                 p.reset()
                 # Using the new frequency to send confirmation, Stage 8.
                 msg["ControlAction"] = "NEW:FREQ"
                 self.redis_db.set(hopping_key, json.dumps(msg))
                 self.redis_db.hset(system_hopping_key, "Stage", 8)
+                print(f"set {hopping_key}, {json.dumps(msg)}")
+                print(f"hset {system_hopping_key}, Stage 8")
                 return
             elif payload["ControlAction"] == "NEW:FREQ:ACK" && stage == 8:
                 # Receiving the ACK on new frequency, Stage 10.
                 # Free the system
+                print(f"Receiving the ACK on new frequency, Stage 10.")
                 p.set("RFSYSTEM:STATE", "Free")
                 return
 
@@ -302,11 +307,13 @@ class redis_sink(gr.sync_block):
         else:
             # I'm following the hopping
             if stage == 4:
-                pre_fre = self.redis_db.get("SYSTEM:FREQ").decode("utf-8")
+                pre_freq = self.redis_db.get("SYSTEM:FREQ").decode("utf-8")
                 # Reply with HOLD:ACK by using the old frequency, Stage 5.
+                print(f"get SYSTEM:FREQ: {pre_freq}")
                 msg["ControlAction"] = "HOLD:ACK"
                 p.set(hopping_key, json.dumps(msg))
                 p.hset(system_hopping_key, "Stage", 5)
+                print(f"hset {system_hopping_key} Stage 5")
                 p.execute()
                 p.reset()
                 # Set the system to the new frequency, Stage 6.
@@ -315,6 +322,9 @@ class redis_sink(gr.sync_block):
                 p.hset(system_hopping_key, "Stage", 6)
                 p.hset(system_hopping_key, "PreFreq", pre_freq)
                 p.hset(system_hopping_key, "Freq", payload["ControlAction"])
+                print(f"hset {system_hopping_key} Stage 6")
+                print(f"hset {system_hopping_key} PreFreq {pre_freq}")
+                print(f"hset {system_hopping_key} Freq, {payload['ControlAction']}")
                 p.execute()
                 p.reset()
                 return
