@@ -210,7 +210,7 @@ class ActionAgent(object):
                 self.db.hset("SYSTEM:HOPPING", "Stage", 3)
                 self.db.hset("SYSTEM:HOPPING", "Freq", hop_to)
                 self.db.hset("SYSTEM:HOPPING", "PreFreq", pre_freq)
-                self.db.set(key, json_info)
+                self.db.set(hopping_key, json_info)
             """
             print('Sleep for 10 second as debugging')
             time.sleep(10)
