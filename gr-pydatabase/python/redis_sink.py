@@ -278,7 +278,7 @@ class redis_sink(gr.sync_block):
 
         if role == "Initiator":
             # I'm initiating the hopping
-            if payload["ControlAction"] == "HOLD:ACK" && stage == 3:
+            if payload["ControlAction"] == "HOLD:ACK" and stage == 3:
                 # Receiving the HOLD:ACK.
                 # Set to the new frequency and send out the check, Stage 7.
                 print(f"hget ({system_hopping_key}, Freq)")
@@ -296,7 +296,7 @@ class redis_sink(gr.sync_block):
                 print(f"set {hopping_key}, {json.dumps(msg)}")
                 print(f"hset {system_hopping_key}, Stage 8")
                 return
-            elif payload["ControlAction"] == "NEW:FREQ:ACK" && stage == 8:
+            elif payload["ControlAction"] == "NEW:FREQ:ACK" and stage == 8:
                 # Receiving the ACK on new frequency, Stage 10.
                 # Free the system
                 print(f"Receiving the ACK on new frequency, Stage 10.")
