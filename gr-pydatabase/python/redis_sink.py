@@ -302,6 +302,7 @@ class redis_sink(gr.sync_block):
         else:
             # I'm following the hopping
             if stage == 4:
+                pre_fre = self.redis_db.get("SYSTEM:FREQ").decode("utf-8")
                 # Reply with HOLD:ACK by using the old frequency, Stage 5.
                 msg["ControlAction"] = "HOLD:ACK"
                 p.set(hopping_key, json.dumps(msg))
@@ -312,6 +313,7 @@ class redis_sink(gr.sync_block):
                 p.hset("TuneRF:11", 'Freq', payload["ControlAction"])
                 p.hset("TuneRF:11", 'Gain', 0.4)
                 p.hset(system_hopping_key, "Stage", 6)
+                p.hset(system_hopping_key, "PreFreq", pre_freq)
                 p.hset(system_hopping_key, "Freq", payload["ControlAction"])
                 p.execute()
                 p.reset()
