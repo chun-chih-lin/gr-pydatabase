@@ -163,53 +163,54 @@ class ActionAgent(object):
 
 
     def detect_interference(self, debug=False):
-        print('[Action] Detecting interference...')
+        try:
+            print('[Action] Detecting interference...')
 
-        # TODO: Setting should be set in db for dynamic changes
-        self.sliding_window_size = 4
-        self.median_threshold = 5.0
-        self.consecutive_threshold = 3
+            # TODO: Setting should be set in db for dynamic changes
+            self.sliding_window_size = 4
+            self.median_threshold = 5.0
+            self.consecutive_threshold = 3
 
-        FAILRED = '\033[91m'
-        OKGREEN = '\033[92m'
-        WARNING = '\033[93m'
-        EOC = '\033[0m'
-        csi_list = self.get_all_csi_in_db()
+            FAILRED = '\033[91m'
+            OKGREEN = '\033[92m'
+            WARNING = '\033[93m'
+            EOC = '\033[0m'
+            csi_list = self.get_all_csi_in_db()
 
-        print(f'{len(csi_list)}')
+            print(f'{len(csi_list)}')
 
-        sliding_var_detect_csis = self.sliding_var_detect(csi_list)
-        detections = self.median_max_detect(sliding_var_detect_csis)
-        print(f'detections: {detections}')
-        consecutive_detection = self.consecutive_detect(detections)
-        print(f'consecutive_detection: {consecutive_detection}')
+            sliding_var_detect_csis = self.sliding_var_detect(csi_list)
+            detections = self.median_max_detect(sliding_var_detect_csis)
+            print(f'detections: {detections}')
+            consecutive_detection = self.consecutive_detect(detections)
+            print(f'consecutive_detection: {consecutive_detection}')
 
-        print(f'sum: {sum(consecutive_detection)}, threshold: {self.consecutive_threshold}, debug: {debug}')
+            print(f'sum: {sum(consecutive_detection)}, threshold: {self.consecutive_threshold}, debug: {debug}')
 
-        if sum(consecutive_detection) >= self.consecutive_threshold or debug:
-            # On Detected, Stage 1.
-            print(f'Too many detected! ({sum(consecutive_detection)}/{len(consecutive_detection)}) Interference detected!')
-            print('Hold the system and try to initiate to jump to another frequency with the receiver.')
-            print('Hold the transmission process')
-            # Hold the system, Stage 2.
-            self.db.set(self.SYSTEM_STATE, self.SYSTEM_TRANS_HOLD)
+            if sum(consecutive_detection) >= self.consecutive_threshold or debug:
+                # On Detected, Stage 1.
+                print(f'Too many detected! ({sum(consecutive_detection)}/{len(consecutive_detection)}) Interference detected!')
+                print('Hold the system and try to initiate to jump to another frequency with the receiver.')
+                print('Hold the transmission process')
+                # Hold the system, Stage 2.
+                self.db.set(self.SYSTEM_STATE, self.SYSTEM_TRANS_HOLD)
 
-            # Initiating the attempt, Stage 3.
-            hopping_key = "Trans:FREQ:HOP"
-            hop_to = "2442000000"
-            ctrl_msg = dict()
-            ctrl_msg["ControlType"] = "HOP"
-            ctrl_msg["ControlAction"] = hop_to
-            ctrl_msg["Role"] = "Follower"
+                # Initiating the attempt, Stage 3.
+                hopping_key = "Trans:FREQ:HOP"
+                hop_to = "2442000000"
+                ctrl_msg = dict()
+                ctrl_msg["ControlType"] = "HOP"
+                ctrl_msg["ControlAction"] = hop_to
+                ctrl_msg["Role"] = "Follower"
 
-            pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
+                pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
 
-            json_info = json.dumps(ctrl_msg, separators=(',', ':'))
-            self.db.hset("SYSTEM:HOPPING", "Role", "Initiator")
-            self.db.hset("SYSTEM:HOPPING", "Stage", 3)
-            self.db.hset("SYSTEM:HOPPING", "Freq", hop_to)
-            self.db.hset("SYSTEM:HOPPING", "PreFreq", pre_freq)
-            self.db.set(key, json_info)
+                json_info = json.dumps(ctrl_msg, separators=(',', ':'))
+                self.db.hset("SYSTEM:HOPPING", "Role", "Initiator")
+                self.db.hset("SYSTEM:HOPPING", "Stage", 3)
+                self.db.hset("SYSTEM:HOPPING", "Freq", hop_to)
+                self.db.hset("SYSTEM:HOPPING", "PreFreq", pre_freq)
+                self.db.set(key, json_info)
             """
             print('Sleep for 10 second as debugging')
             time.sleep(10)
@@ -218,7 +219,9 @@ class ActionAgent(object):
             print('Free the system from hold.')
             self.db.set(self.SYSTEM_STATE, self.SYSTEM_FREE)
             """
-
+        except Exception as exp:
+            e_type, e_obj, e_tb = sys.exc_info()
+            print(f"[Action] Detecting Interference {exp}. At line {e_tb.tb_lineno}")
 
 
 def main():
