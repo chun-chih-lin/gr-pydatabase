@@ -207,12 +207,12 @@ class ActionAgent(object):
 				self.db.hset("SYSTEM:HOPPINg", "Freq", hop_to)
 				self.db.set(key, json_info)
 				
-                        print('Sleep for 10 second as debugging')
-                        time.sleep(10)
-                        print('Resuming the system in 1 sec.')
-                        time.sleep(1)
-                        print('Free the system from hold.')
-                        self.db.set(self.SYSTEM_STATE, self.SYSTEM_FREE)
+				print('Sleep for 10 second as debugging')
+				time.sleep(10)
+				print('Resuming the system in 1 sec.')
+				time.sleep(1)
+				print('Free the system from hold.')
+				self.db.set(self.SYSTEM_STATE, self.SYSTEM_FREE)
 
 
 def main():
