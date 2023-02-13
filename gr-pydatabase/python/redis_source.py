@@ -23,6 +23,7 @@ import redis
 import pmt
 import threading
 import sys
+import time
 
 import numpy
 from gnuradio import gr
@@ -87,7 +88,7 @@ class redis_source(gr.sync_block):
                 self.msg = self.redis_db.get(db_key).decode("utf-8")
                 print(f"[Source] self.msg {self.msg}, {type(self.msg)}")
                 self.message_port_pub(pmt.string_to_symbol("pdu"), pmt.intern(self.msg))
-                print("Send out the pdu")
+                print(f"Send out the pdu, {time.time()}")
         except Exception as exp:
             _, _, e_tb = sys.exc_info()
             print(f'[Source] Exception: {exp}, Line {e_tb.tb_lineno}')
