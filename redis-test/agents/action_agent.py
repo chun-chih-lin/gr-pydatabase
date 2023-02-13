@@ -183,7 +183,7 @@ class ActionAgent(object):
                     p.hset(tune_rf, "Gain", 0.4)
                     p.hset(system_hopping_key, "Stage", 6)
                     p.hset(system_hopping_key, "PreFreq", pre_freq)
-                    p.hset(system_hopping_key, "Freq", payload["ContralAction"])
+                    p.hset(system_hopping_key, "Freq", payload["ControlAction"])
                     p.execute()
                     p.reset()
                     return
