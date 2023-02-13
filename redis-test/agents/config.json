@@ -36,5 +36,5 @@
     "HOPPING_CTRL_ACT_NEW_FREQ_ACK": "NEW:FREQ:ACK",
 
     "SYSTEM_FREQ": "SYSTEM:FREQ",
-    "TUNE_RF": "TuneRF:11",
+    "TUNE_RF": "TuneRF:11"
 }
