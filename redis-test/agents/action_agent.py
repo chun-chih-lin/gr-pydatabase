@@ -9,6 +9,8 @@ import sys, os
 import socket
 import scapy.all as scapy
 
+from BasicAgent import BasicAgent
+
 class ActionAgent(object):
     def __init__(self, subprefix, agentkey):
         super(ActionAgent, self).__init__()
