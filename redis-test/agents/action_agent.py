@@ -234,6 +234,9 @@ class ActionAgent(object):
                         p.execute()
                         p.reset()
                         time.sleep(0.01)
+
+                    time.sleep(0.5)
+                    self.db.set("RFSYSTEM:STATE", "Free")
                     return
                 else:
                     print("Something went wrong.")
