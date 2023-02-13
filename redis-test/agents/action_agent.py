@@ -41,31 +41,32 @@ class ActionAgent(object):
 
         self.get_config()
 
-        self.REDEVICE_STATE = "RFDEVICE:STATE"
-        self.MONITOR_ACK = "TRANS:ACK"
-        self.ACK_STATE_WAIT = "Waiting"
-        self.ACK_STATE_FAIL = "Failed"
-        self.ACK_STATE_SUCC = "Success"
+        self.REDEVICE_STATE = self.c["REDEVICE_STATE"]
+        self.MONITOR_ACK = self.c["MONITOR_ACK"]
+        self.ACK_STATE_WAIT = self.c["ACK_STATE_WAIT"]
+        self.ACK_STATE_FAIL = self.c["ACK_STATE_FAIL"]
+        self.ACK_STATE_SUCC = self.c["ACK_STATE_SUCC"]
 
-        self.KEYWORD_QUIT = "Quit"
-        self.KEYWORD_BUSY = "Busy"
-        self.KEYWORD_IDLE = "Idle"
-        self.KEYWORD_STOP = "Stop"
-        self.KEYWORD_WAIT_ACK = "WAITACK"
+        self.KEYWORD_QUIT = self.c["KEYWORD_QUIT"]
+        self.KEYWORD_BUSY = self.c["KEYWORD_BUSY"]
+        self.KEYWORD_IDLE = self.c["KEYWORD_IDLE"]
+        self.KEYWORD_STOP = self.c["KEYWORD_STOP"]
+        self.KEYWORD_WAIT_ACK = self.c["KEYWORD_WAIT_ACK"]
 
-        self.SYSTEM_STATE = "RFSYSTEM:STATE"
-        self.SYSTEM_FREE = "Free"
-        self.SYSTEM_TRANS_HOLD = "Hold"
+        self.SYSTEM_STATE = self.c["SYSTEM_STATE"]
+        self.SYSTEM_FREE = self.c["SYSTEM_FREE"]
+        self.SYSTEM_TRANS_HOLD = self.c["SYSTEM_TRANS_HOLD"]
 
-        self.MAX_CSI_RECORD = 5
+        self.MAX_CSI_RECORD = self.c["MAX_CSI_RECORD"]
 
         print('Initialization done.')
 
     def get_config(self):
         with open("config.json", 'r') as f:
             config = json.load(f)
-        print(f"config: {config} {type(config)}")
-        
+        self.c = config
+        print(f"config: {self.c} {type(config)}")
+
     def check_notify(self):
         self.db.config_set('notify-keyspace-events', 'KEA')
         pass
@@ -89,20 +90,20 @@ class ActionAgent(object):
         try:
             print(f'[Action] Event! {msg}')
             action = self.get_action(msg)
-            if action == "CSI":
-                csi_key = self.db.get("SYSTEM:ACTION:CSI").decode("utf-8")
+            if action == self.c["SYSTEM_ACTION_TYPE_CSI"]:
+                csi_key = self.db.get(self.c["SYSTEM_ACTION_CSI"]).decode("utf-8")
                 timestamp = csi_key.split(":")[1]
-                newest_key = self.db.lrange("SYSTEM:CSI:QUEUE", 0, 0)
+                newest_key = self.db.lrange(self.c["SYSTEM_CSI_QUEUE"], 0, 0)
                 newest_key = [k.decode("utf-8") for k in newest_key]
                 if csi_key in newest_key:
                     print('key is already in the queue. Skip it.')
                     pass
                 elif len(newest_key) < 1:
-                    self.db.lpush("SYSTEM:CSI:QUEUE", csi_key)
+                    self.db.lpush(self.c["SYSTEM_CSI_QUEUE"], csi_key)
                 elif self.is_newer_csi(csi_key, newest_key[0]):
-                    self.db.lpush("SYSTEM:CSI:QUEUE", csi_key)
-                    if len(self.db.lrange("SYSTEM:CSI:QUEUE", 0, -1)) > self.MAX_CSI_RECORD:
-                        oldest_csi_key = self.db.rpop("SYSTEM:CSI:QUEUE")
+                    self.db.lpush(self.c["SYSTEM_CSI_QUEUE"], csi_key)
+                    if len(self.db.lrange(self.c["SYSTEM_CSI_QUEUE"], 0, -1)) > self.MAX_CSI_RECORD:
+                        oldest_csi_key = self.db.rpop(self.c["SYSTEM_CSI_QUEUE"])
                         print(f'Adding new key: {csi_key}. Delete oldest key: {oldest_csi_key}')
                         print(f'*** db.delete({oldest_csi_key})')
                         self.db.delete(oldest_csi_key)
@@ -114,9 +115,9 @@ class ActionAgent(object):
                     print(f'keys in queue: {newest_key}')
                     print(f'*** db.delete({csi_key})')
                     self.db.delete(csi_key)
-            elif action == "HOP":
+            elif action == self.c["SYSTEM_ACTION_TYPE_HOP"]:
                 self.action_to_hop()
-            elif action == "DEBUG":
+            elif action == self.c["SYSTEM_ACTION_TYPE_DEBUG"]:
                 # SYSTEM:ACTION:DEBUG
                 self.detect_interference(debug=True)
             else:
@@ -138,55 +139,50 @@ class ActionAgent(object):
             payload = self.db.get("SYSTEM:ACTION:HOP").decode("utf-8")
             payload = json.loads(payload)
 
-            hopping_key = "Trans:FREQ:HOP"
-            system_hopping_key = "SYSTEM:HOPPING"
-            tune_rf = "TuneRF:11"
-
-            role = self.db.hget(system_hopping_key, "Role")
+            role = self.db.hget(self.c["SYSTEM_HOPPING"], "Role")
             if role is None:
-                self.db.hset(system_hopping_key, "Role", payload["Role"])
+                self.db.hset(self.c["SYSTEM_HOPPING"], "Role", payload["Role"])
             else:
                 role = role.decode("utf-8")
 
             msg = dict()
-            msg["ControlType"] = "HOP"
-            stage = self.db.hget(system_hopping_key, "Stage").decode("utf-8")
+            msg["ControlType"] = self.c["SYSTEM_ACTION_TYPE_HOP"]
+            stage = self.db.hget(self.c["SYSTEM_HOPPING"], "Stage").decode("utf-8")
 
             p = self.db.pipeline()
 
             print("---------------------------------")
-            if role == "Initiator":
+            if role == self.c["SYSTEM_HOPPING_ROLE_INIT"]:
                 # I'm initiating the hopping
                 print(f"I'm an initiator. Stage: {stage}")
-                if payload["ControlAction"] == "HOLD:ACK" and stage == "3":
+                if payload["ControlAction"] == self.c["HOPPING_CTRL_ACT_HOLD_ACK"] and stage == "3":
                     
-                    hop_to = self.db.hget(system_hopping_key, "Freq").decode("utf-8")
-                    p.hset(tune_rf, "Freq", hop_to)
-                    p.hset(tune_rf, "Gain", 0.4)
-                    p.hset(system_hopping_key, "Stage", 7)
+                    hop_to = self.db.hget(self.c["SYSTEM_HOPPING"], "Freq").decode("utf-8")
+                    p.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
+                    p.hset(self.c["SYSTEM_HOPPING"], "Stage", 7)
                     p.execute()
                     p.reset()
                     print(f"Using the new frequency!")
-                    print(f"  hset {tune_rf} Freq {hop_to}")
-                    print(f"  hset {tune_rf} Gain 0.4")
-                    print(f"  hset {system_hopping_key} Stage 7")
+                    print(f"  hset {self.c["TUNE_RF"]} Freq {hop_to}")
+                    print(f"  hset {self.c["TUNE_RF"]} Gain 0.4")
+                    print(f"  hset {self.c["SYSTEM_HOPPING"]} Stage 7")
 
 
                     print("Send 5 check packets on new channel")
                     for try_c in range(5):
-                        msg["ControlAction"] = "NEW:FREQ"
-                        p.set(hopping_key, json.dumps(msg))
-                        p.hset(system_hopping_key, "Stage", 8)
+                        msg["ControlAction"] = self.c["HOPPING_CTRL_ACT_NEW_FREQ"]
+                        p.set(self.c["TRANS_FREQ_HOP"], json.dumps(msg))
+                        p.hset(self.c["SYSTEM_HOPPING"], "Stage", 8)
                         print("Sending out the check on new channel...")
-                        print(f"  set {hopping_key}, {msg}")
-                        print(f"  hset {system_hopping_key} Stage 8")
+                        print(f"  set {self.c["TRANS_FREQ_HOP"]}, {msg}")
+                        print(f"  hset {self.c["SYSTEM_HOPPING"]} Stage 8")
                         p.execute()
                         p.reset()
                         time.sleep(0.01)
                     return
-                elif payload["ControlAction"] == "NEW:FREQ:ACK" and stage == '8':
+                elif payload["ControlAction"] == self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"] and stage == '8':
                     print("Receive NEW:FREQ:ACK")
-                    p.set(self.SYSTEM_STATE, "Free")
+                    p.set(self.SYSTEM_STATE, self.c["SYSTEM_FREE"])
                     p.execute()
                     p.reset()
                     return
@@ -198,16 +194,16 @@ class ActionAgent(object):
                 # I'm the follower.
                 print(f"I'm a follower, {stage}")
                 if stage == '4':
-                    pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
+                    pre_freq = self.db.get(self.c["SYSTEM_FREQ"]).decode("utf-8")
                     
-                    msg["ControlAction"] = "HOLD:ACK"
-                    p.set(hopping_key, json.dumps(msg))
-                    p.hset(system_hopping_key, "Stage", 5)
+                    msg["ControlAction"] = self.c["HOPPING_CTRL_ACT_HOLD_ACK"]
+                    p.set(self.c["TRANS_FREQ_HOP"], json.dumps(msg))
+                    p.hset(self.c["SYSTEM_HOPPING"], "Stage", 5)
                     p.execute()
                     p.reset()
                     print(f"Received the initiation, send back the hold ack")
-                    print(f"  set {hopping_key}, {msg}")
-                    print(f"  hset {system_hopping_key} Stage 5")
+                    print(f"  set {self.c["TRANS_FREQ_HOP"]}, {msg}")
+                    print(f"  hset {self.c["SYSTEM_HOPPING"]} Stage 5")
 
 
                     print(f"  Timestamp: {payload['Timestamp']}, Idx: {payload['Idx']}")
@@ -217,33 +213,31 @@ class ActionAgent(object):
                     print(f"Wait for {wait_time} to change the freq")
                     time.sleep(wait_time)
                     print("Switch to new Freq")
-                    p.hmset(tune_rf, {"Freq": payload["ControlAction"], "Gain": 0.4})
-                    p.hset(system_hopping_key, "Stage", 6)
-                    p.hset(system_hopping_key, "PreFreq", pre_freq)
-                    p.hset(system_hopping_key, "Freq", payload["ControlAction"])
+                    p.hmset(self.c["TUNE_RF"], {"Freq": payload["ControlAction"], "Gain": 0.4})
+                    p.hmset(self.c["SYSTEM_HOPPING"], {"Stage": 6, "PreFreq": pre_freq, "Freq": payload["ControlAction"]})
                     print(f"Change to new channel {payload['ControlAction']}")
-                    print(f"  hset {tune_rf} Freq {payload['ControlAction']}")
-                    print(f"  hset {tune_rf} Gain 0.4")
-                    print(f"  hset {system_hopping_key} Stage 6")
-                    print(f"  hset {system_hopping_key} PreFreq {pre_freq}")
-                    print(f"  hset {system_hopping_key} Freq {payload['ControlAction']}")
+                    print(f"  hset {self.c["TUNE_RF"]} Freq {payload['ControlAction']}")
+                    print(f"  hset {self.c["TUNE_RF"]} Gain 0.4")
+                    print(f"  hset {self.c["SYSTEM_HOPPING"]} Stage 6")
+                    print(f"  hset {self.c["SYSTEM_HOPPING"]} PreFreq {pre_freq}")
+                    print(f"  hset {self.c["SYSTEM_HOPPING"]} Freq {payload['ControlAction']}")
                     p.execute()
                     p.reset()
                     return
                 elif stage == '6':
                     for try_c in range(5):
-                        msg["ControlAction"] = "NEW:FREQ:ACK"
-                        p.set(hopping_key, json.dumps(msg))
-                        p.hset(system_hopping_key, "Stage", 9)
+                        msg["ControlAction"] = self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"]
+                        p.set(self.c["TRANS_FREQ_HOP"], json.dumps(msg))
+                        p.hset(self.c["SYSTEM_HOPPING"], "Stage", 9)
                         print("Reply NEW:FREQ:ACK")
-                        print(f"  set {hopping_key}, {json.dumps(msg)}")
-                        print(f"  hset {system_hopping_key}, Stage 9")
+                        print(f"  set {self.c["TRANS_FREQ_HOP"]}, {json.dumps(msg)}")
+                        print(f"  hset {self.c["SYSTEM_HOPPING"]}, Stage 9")
                         p.execute()
                         p.reset()
                         time.sleep(0.01)
 
                     time.sleep(0.5)
-                    self.db.set("RFSYSTEM:STATE", "Free")
+                    self.db.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_FREE"])
                     return
                 else:
                     print("Something went wrong.")
@@ -254,13 +248,11 @@ class ActionAgent(object):
             print(f'[ActionAgent] {exp}, Line {e_tb.tb_lineno}')
         pass
 
-
-
     #--------------------------------------------------------------------------------
     # For Action: Detecting Interference
     def get_all_csi_in_db(self):
         try:
-            csi_keys_list = self.db.lrange("SYSTEM:CSI:QUEUE", 0, -1)
+            csi_keys_list = self.db.lrange(self.c["SYSTEM_CSI_QUEUE"], 0, -1)
             csi_list = []
             for csi_key in csi_keys_list:
                 print(f'csi_key: {csi_key}')
@@ -333,11 +325,10 @@ class ActionAgent(object):
                 print('Hold the system and try to initiate to jump to another frequency with the receiver.')
                 print('Hold the transmission process')
                 # Hold the system, Stage 2.
-                self.db.hset("SYSTEM:HOPPING", "Stage", 2)
+                self.db.hset(self.c["SYSTEM_HOPPING"], "Stage", 2)
                 self.db.set(self.SYSTEM_STATE, self.SYSTEM_TRANS_HOLD)
 
                 # Initiating the attempt, Stage 3.
-                hopping_key = "Trans:FREQ:HOP"
                 hop_to = "2442000000"
                 ctrl_msg = dict()
                 ctrl_msg["ControlType"] = "HOP"
@@ -351,26 +342,22 @@ class ActionAgent(object):
                     ctrl_msg["Timestamp"] = timestamp
                     ctrl_msg["Idx"] = try_c
                     json_info = json.dumps(ctrl_msg, separators=(',', ':'))
-                    self.db.hset("SYSTEM:HOPPING", "Role", "Initiator")
-                    self.db.hset("SYSTEM:HOPPING", "Stage", 3)
-                    self.db.hset("SYSTEM:HOPPING", "Freq", hop_to)
-                    self.db.hset("SYSTEM:HOPPING", "PreFreq", pre_freq)
+                    self.db.hmset("SYSTEM:HOPPING", {"Role": "Initiator", "Stage": 3, "Freq": hop_to, "PreFreq": pre_freq})
                     if try_c == 0:
                         self.db.hset("SYSTEM:HOPPING", "Timestamp", timestamp)
-                    self.db.set(hopping_key, json_info)
+                    self.db.set(self.c["TRANS_FREQ_HOP"], json_info)
                     print(f"hset SYSTEM:HOPPING  Role Initiator")
                     print(f"hset SYSTEM:HOPPING  Stage 3")
                     print(f"hset SYSTEM:HOPPING  Freq {hop_to}")
                     print(f"hset SYSTEM:HOPPING  PreFreq {pre_freq}")
-                    print(f"set {hopping_key} {json_info}")
+                    print(f"set {self.c["TRANS_FREQ_HOP"]} {json_info}")
                     time.sleep(0.01)
 
                 print(f"Send out five packets, switch to new channel...")
-                self.db.hmset("TuneRF:11", {"Freq": hop_to, "Gain": 0.4})
+                self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()
             print(f"[Action] Detecting Interference {exp}. At line {e_tb.tb_lineno}")
-
 
 def main():
     print('Running Action Agent...')

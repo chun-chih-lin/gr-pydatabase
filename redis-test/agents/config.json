@@ -1,4 +1,68 @@
 {
-    "TEST": "test",
-    "Another": 2
+    // Agent behaivor
+    "KEYWORD_QUIT": "Quit",
+    "KEYWORD_BUSY": "Busy",
+    "KEYWORD_IDLE": "Idle",
+    "KEYWORD_STOP": "Stop",
+
+    // Agent name key words
+    "KEYWORD_TRANS": "TRANSMISSION",
+    "KEYWORD_QUEUE_LIST": "QUEUE:LIST:TRANS",
+    "KEYWORD_SYSTEM_ACTION": "SYSTEM:ACTION:*",
+
+    // Retransmission
+    // Retransmission attempt count
+    "RETRY_MAX": 5,
+    // ACK wait timer
+    "WAIT_MAX": 0.001,
+    // Monitor normal transmission ACK
+    "MONITOR_ACK": "TRANS:ACK",
+    "KEYWORD_WAIT_ACK": "WAITACK",
+    "REDEVICE_STATE": "RFDEVICE:STATE",
+    // Normal transmission ACK State
+    "ACK_STATE_WAIT": "Waiting",
+    "ACK_STATE_FAIL": "Failed",
+    "ACK_STATE_SUCC": "Success",
+        
+    // Interference detection
+    // Indicate the system state
+    "SYSTEM_STATE": "RFSYSTEM:STATE",
+    // Free for normal transmission
+    "SYSTEM_FREE": "Free",
+    // Hold normal transmission for control command
+    "SYSTEM_TRANS_HOLD": "Hold",
+    // Number of interference for detection
+    "MAX_CSI_RECORD": 5,
+
+    "SYSTEM_CSI_QUEUE": "SYSTEM:CSI:QUEUE",
+    "SYSTEM_ACTION_CSI": "SYSTEM:ACTION:CSI",
+    // All different types that the action agent should handle
+    "SYSTEM_ACTION_TYPE_HOP": "HOP",
+    "SYSTEM_ACTION_TYPE_CSI": "CSI",
+    "SYSTEM_ACTION_TYPE_DEBUG": "DEBUG",
+    // The key used for issuing frequency hopping
+    "TRANS_FREQ_HOP": "Trans:FREQ:HOP",
+    // The key stores the hopping for the system
+    // SYSTEM:HOPPING [Hash-set]
+    //      Role: [Initiator, Follower]
+    //      Stage: [1 ... 9]
+    //      PreFreq: The original used frequency for failing rollback
+    //      Freq: The new frequency for hopping
+    "SYSTEM_HOPPING": "SYSTEM:HOPPING",
+    "SYSTEM_HOPPING_ROLE_INIT": "Initiator",
+    "SYSTEM_HOPPING_ROLE_FLLWR": "Follower",
+    // Indicating the ACK for Follower, Stage 4
+    "HOPPING_CTRL_ACT_HOLD_ACK": "HOLD:ACK",
+    // Indicating the ACK for Initiator, Stage 5
+    "HOPPING_CTRL_ACT_NEW_FREQ":"NEW:FREQ",
+    // Indicating the ACK for Follower, Stage 6
+    "HOPPING_CTRL_ACT_NEW_FREQ_ACK": "NEW:FREQ:ACK",
+
+    // The current using frequency channel
+    "SYSTEM_FREQ": "SYSTEM:FREQ",
+    // Key for tuning RF frequency
+    // TuneRF:11 [Hash-set]
+    //      Freq: Selected frequency in Hz
+    //      Gain: The TX/RX gain [0.0 - 1.0]
+    "TUNE_RF": "TuneRF:11",
 }
