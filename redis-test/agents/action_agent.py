@@ -11,15 +11,16 @@ import scapy.all as scapy
 
 from BasicAgent import BasicAgent
 
-class ActionAgent(object):
+class ActionAgent(BasicAgent):
     def __init__(self, subprefix, agentkey):
-        super(ActionAgent, self).__init__()
+        super(ActionAgent, self).__init__("ActionAgent", subprefix, agentkey)
         """
             Listen: SYSTEM:ACTION:*
             Actions:
                 CSI:
                 DEBUG:
                 HOP:
+        """
         """
         print('Initialing ActionAgent...')
         self.db_host = 'localhost'
@@ -42,6 +43,7 @@ class ActionAgent(object):
         self.thread = self.pubsub.run_in_thread(sleep_time=0.001)
 
         self.get_config()
+        """
 
         self.REDEVICE_STATE = self.c["REDEVICE_STATE"]
         self.MONITOR_ACK = self.c["MONITOR_ACK"]
@@ -63,6 +65,7 @@ class ActionAgent(object):
 
         print('Initialization done.')
 
+    """
     def get_config(self):
         with open("config.json", 'r') as f:
             config = json.load(f)
@@ -72,6 +75,7 @@ class ActionAgent(object):
     def check_notify(self):
         self.db.config_set('notify-keyspace-events', 'KEA')
         pass
+    """
         
     def utf8_decode(self, msg):
         return msg.decode('utf-8')

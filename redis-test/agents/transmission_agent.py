@@ -6,10 +6,13 @@ import json
 import random
 import string
 
-class TransAgent(object):
+from BasicAgent import BasicAgent
+
+class TransAgent(BasicAgent):
     """docstring for TransAgent"""
     def __init__(self, subprefix, agentkey):
-        super(TransAgent, self).__init__()
+        super(TransAgent, self).__init__("TransAgent", subprefix, agentkey)
+        """
         print('Initialing TransAgent...')
         self.db_host = 'localhost'
         self.db_port = 6379
@@ -28,6 +31,7 @@ class TransAgent(object):
         self.pubsub.psubscribe(**{self.agentpattern: self.agent_event_handler})
         self.thread = self.pubsub.run_in_thread(sleep_time=0.001)
 
+        """
         self.RETRY_MAX = 5
         self.WAIT_MAX = 0.01
         self.REDEVICE_STATE = "RFDEVICE:STATE"
@@ -44,7 +48,9 @@ class TransAgent(object):
 
         self.SYSTEM_STATE = "RFSYSTEM:STATE"
         self.SYSTEM_FREE = "Free"
-        self.SYSTEM_TRANS_HOLD = "Hold"        
+        self.SYSTEM_TRANS_HOLD = "Hold"
+
+        print(f"--- Transmission {self.KEYWORD_QUIT}")
         print('Initialization done.')
 
     def check_notify(self):

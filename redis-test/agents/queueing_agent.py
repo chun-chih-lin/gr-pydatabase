@@ -6,10 +6,13 @@ import json
 import random
 import string
 
-class QueueAgent(object):
+from BasicAgent import BasicAgent
+
+class QueueAgent(BasicAgent):
     """docstring for QueueAgent"""
     def __init__(self, subprefix, agentkey):
-        super(QueueAgent, self).__init__()
+        super(QueueAgent, self).__init__("QueueAgent", subprefix, agentkey)
+        """
         print('Initialing QueueAgent...')
         self.db_host = 'localhost'
         self.db_port = 6379
@@ -27,6 +30,8 @@ class QueueAgent(object):
         self.pubsub.psubscribe(**{self.subpattern: self.event_handler})
         self.pubsub.psubscribe(**{self.agentpattern: self.agent_event_handler})
         self.thread = self.pubsub.run_in_thread(sleep_time=0.001)
+
+        """
 
         self.RETRY_MAX = 5
         self.WAIT_MAX = 0.001
