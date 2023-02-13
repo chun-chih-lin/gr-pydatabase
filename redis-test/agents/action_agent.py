@@ -163,16 +163,21 @@ class ActionAgent(object):
                     print(f"  hset {tune_rf} Gain 0.4")
                     print(f"  hset {system_hopping_key} Stage 7")
 
-                    msg["ControlAction"] = "NEW:FREQ"
-                    p.set(hopping_key, json.dumps(msg))
-                    p.hset(sytem_hopping_key, "Stage", 8)
-                    print("Sending out the check on new channel...")
-                    print(f"  set {hopping_key}, {msg}")
-                    print(f"  hset {system_hopping_key} Stage 8")
-                    p.execute()
-                    p.reset()
+
+                    print("Send 5 check packets on new channel")
+                    for try_c in range(5):
+                        msg["ControlAction"] = "NEW:FREQ"
+                        p.set(hopping_key, json.dumps(msg))
+                        p.hset(sytem_hopping_key, "Stage", 8)
+                        print("Sending out the check on new channel...")
+                        print(f"  set {hopping_key}, {msg}")
+                        print(f"  hset {system_hopping_key} Stage 8")
+                        p.execute()
+                        p.reset()
+                        time.sleep(0.01)
                     return
                 elif payload["ControlAction"] == "NEW:FREQ:ACK" and stage == '8':
+                    print("Receive NEW:FREQ:ACK")
                     p.set(self.SYSTEM_STATE, "Free")
                     p.execute()
                     p.reset()
@@ -186,7 +191,7 @@ class ActionAgent(object):
                 print(f"I'm a follower, {stage}")
                 if stage == '4':
                     pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
-
+                    
                     msg["ControlAction"] = "HOLD:ACK"
                     p.set(hopping_key, json.dumps(msg))
                     p.hset(system_hopping_key, "Stage", 5)
@@ -196,6 +201,11 @@ class ActionAgent(object):
                     print(f"  set {hopping_key}, {msg}")
                     print(f"  hset {system_hopping_key} Stage 5")
 
+                    wait_time = payload["Timestamp"] + 0.01*float(payload["Idx"]) - time.time()
+                    print(f"Wait for {wait_time} to change the freq")
+                    
+                    time.sleep(wait_time)
+                    print("Switch to new Freq")
                     p.hset(tune_rf, "Freq", payload["ControlAction"])
                     p.hset(tune_rf, "Gain", 0.4)
                     p.hset(system_hopping_key, "Stage", 6)
@@ -306,6 +316,7 @@ class ActionAgent(object):
                 print('Hold the system and try to initiate to jump to another frequency with the receiver.')
                 print('Hold the transmission process')
                 # Hold the system, Stage 2.
+                self.db.hset("SYSTEM:HOPPING", "Stage", 2)
                 self.db.set(self.SYSTEM_STATE, self.SYSTEM_TRANS_HOLD)
 
                 # Initiating the attempt, Stage 3.
@@ -318,17 +329,29 @@ class ActionAgent(object):
 
                 pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
 
-                json_info = json.dumps(ctrl_msg, separators=(',', ':'))
-                self.db.hset("SYSTEM:HOPPING", "Role", "Initiator")
-                self.db.hset("SYSTEM:HOPPING", "Stage", 3)
-                self.db.hset("SYSTEM:HOPPING", "Freq", hop_to)
-                self.db.hset("SYSTEM:HOPPING", "PreFreq", pre_freq)
-                self.db.set(hopping_key, json_info)
-                print(f"hset SYSTEM:HOPPING  Role Initiator")
-                print(f"hset SYSTEM:HOPPING  Stage 3")
-                print(f"hset SYSTEM:HOPPING  Freq {hop_to}")
-                print(f"hset SYSTEM:HOPPING  PreFreq {pre_freq}")
-                print(f"set {hopping_key} {json_info}")
+                for try_c in range(5):
+                    timestamp = time.time()
+                    ctrl_msg["Timestamp"] = timestamp
+                    ctrl_msg["Idx"] = try_c
+                    json_info = json.dumps(ctrl_msg, separators=(',', ':'))
+                    self.db.hset("SYSTEM:HOPPING", "Role", "Initiator")
+                    self.db.hset("SYSTEM:HOPPING", "Stage", 3)
+                    self.db.hset("SYSTEM:HOPPING", "Freq", hop_to)
+                    self.db.hset("SYSTEM:HOPPING", "PreFreq", pre_freq)
+                    if try_c == 0:
+                        self.db.hset("SYSTEM:HOPPING", "Timestamp", timestamp)
+                    self.db.set(hopping_key, json_info)
+                    print(f"hset SYSTEM:HOPPING  Role Initiator")
+                    print(f"hset SYSTEM:HOPPING  Stage 3")
+                    print(f"hset SYSTEM:HOPPING  Freq {hop_to}")
+                    print(f"hset SYSTEM:HOPPING  PreFreq {pre_freq}")
+                    print(f"set {hopping_key} {json_info}")
+                    time.sleep(0.01)
+
+                print(f"Send out five packets, switch to new channel...")
+                self.db.hset("TuneRF:11", "Freq", hop_to)
+                self.db.hset("TuneRF:11", "Gain", 0.4)
+
 
             """
             print('Sleep for 10 second as debugging')
