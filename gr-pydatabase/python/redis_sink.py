@@ -197,6 +197,7 @@ class redis_sink(gr.sync_block):
         # self.msg_debug("[gr-pydatabase] Check if pdu is PDU...")
         try:
             if pmt.is_pair(pdu):
+
                 # self.msg_debug("[gr-pydatabase] It is a PDU!")
                 meta = pmt.to_python(pmt.car(pdu))
                 if meta is None:
