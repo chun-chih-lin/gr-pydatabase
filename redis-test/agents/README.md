@@ -118,3 +118,5 @@ while is_keys_waiting():
 		sleep()
 ```
 
+#### All keys in use
+Please refer to README.json
