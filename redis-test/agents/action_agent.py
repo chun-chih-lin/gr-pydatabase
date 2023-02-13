@@ -171,7 +171,7 @@ class ActionAgent(object):
             else:
                 # I'm the follower.
                 if stage == '4':
-                    pre_re = self.db.get("SYSTEM:FREQ").decode("utf-8")
+                    pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
 
                     msg["ControlAction"] = "HOLD:ACK"
                     p.set(hopping_key, json.dumps(msg))

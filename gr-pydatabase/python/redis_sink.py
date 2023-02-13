@@ -81,6 +81,7 @@ class redis_sink(gr.sync_block):
     def parse_pdu_into_db(self, pdu):
         def check_dest(addr):
             # self.msg_debug(f'{self.macaddr}, {addr}')
+            print(f'[Sink] I am {self.macaddr}, dst is {addr}')
             return self.macaddr == addr
         def get_type(frame_type, frame_subtype):
             if frame_type == 0:
@@ -212,6 +213,7 @@ class redis_sink(gr.sync_block):
                     payload = "".join([chr(r) for r in vector[24:]])
                     print(f"payload: {payload}")
                     if len(payload) == 0:
+                        print("payload is zero")
                         return
                                         
                     ### header_info: for future used as indication for the receiver and transmitter
@@ -219,6 +221,7 @@ class redis_sink(gr.sync_block):
                     self.msg_debug(f'header_info: \n{header_info}')
                     self.msg_debug(f'payload: {payload}')
                     self.msg_debug(f'Receive a type: {header_info["type"]} frame')
+                    print(f'is for me: {is_for_me}')
                     if is_for_me:
                         payload_dict = json.loads(payload)
                         if payload_dict.get('ControlType') is not None:
