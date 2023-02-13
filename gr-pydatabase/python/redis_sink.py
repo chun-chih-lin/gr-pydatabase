@@ -210,6 +210,8 @@ class redis_sink(gr.sync_block):
                     vector = pmt.u8vector_elements(vector)
                     payload = "".join([chr(r) for r in vector[24:]])
                     print(f"payload: {payload}")
+                    if len(payload) == 0:
+                        return
                     payload_dict = json.loads(payload)
                     if payload_dict.get('ControlType') is not None:
                         # It is a control data frame.
@@ -218,7 +220,7 @@ class redis_sink(gr.sync_block):
                             print("Hold the system until hopping is completed")
                             self.redis_db.set("RFSYSTEM:STATE", "Hold")
                             self.redis_db.hset("SYSTEM:HOPPIONG", "Stage", 4)
-                            self.action_to_hop(payload)
+                            self.action_to_hop(payload_dict)
                             return
 
                     self.msg_debug('If it is a ControlType frame, this line should not be executed')
