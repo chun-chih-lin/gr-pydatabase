@@ -188,6 +188,7 @@ class ActionAgent(object):
                     return
             else:
                 # I'm the follower.
+                print("------------------------------------")
                 print(f"I'm a follower, {stage}")
                 if stage == '4':
                     pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
@@ -203,11 +204,10 @@ class ActionAgent(object):
 
                     wait_time = payload["Timestamp"] + 0.01*float(payload["Idx"]) - time.time()
                     print(f"Wait for {wait_time} to change the freq")
-                    
-                    time.sleep(wait_time)
+                    if wait_time > 0:
+                        time.sleep(wait_time)
                     print("Switch to new Freq")
-                    p.hset(tune_rf, "Freq", payload["ControlAction"])
-                    p.hset(tune_rf, "Gain", 0.4)
+                    p.hmset(tune_rf, {"Freq": payload["ControlAction"], "Gain": 0.4})
                     p.hset(system_hopping_key, "Stage", 6)
                     p.hset(system_hopping_key, "PreFreq", pre_freq)
                     p.hset(system_hopping_key, "Freq", payload["ControlAction"])
@@ -221,11 +221,16 @@ class ActionAgent(object):
                     p.reset()
                     return
                 elif stage == '6':
-                    msg["ControlAction"] = "NEW:FREQ:ACK"
-                    p.set(hopping_key, json.dumps(msg))
-                    p.hset(system_hopping_key, "Stage", 9)
-                    p.execute()
-                    p.reset()
+                    for try_c in range(5):
+                        msg["ControlAction"] = "NEW:FREQ:ACK"
+                        p.set(hopping_key, json.dumps(msg))
+                        p.hset(system_hopping_key, "Stage", 9)
+                        print("Reply NEW:FREQ:ACK")
+                        print(f"  set {hopping_key}, {json.dumps(msg)}")
+                        print(f"  hset {system_hopping_key}, Stage 9")
+                        p.execute()
+                        p.reset()
+                        time.sleep(0.01)
                     return
 
                 else:
@@ -351,16 +356,6 @@ class ActionAgent(object):
                 print(f"Send out five packets, switch to new channel...")
                 self.db.hset("TuneRF:11", "Freq", hop_to)
                 self.db.hset("TuneRF:11", "Gain", 0.4)
-
-
-            """
-            print('Sleep for 10 second as debugging')
-            time.sleep(10)
-            print('Resuming the system in 1 sec.')
-            time.sleep(1)
-            print('Free the system from hold.')
-            self.db.set(self.SYSTEM_STATE, self.SYSTEM_FREE)
-            """
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()
             print(f"[Action] Detecting Interference {exp}. At line {e_tb.tb_lineno}")
