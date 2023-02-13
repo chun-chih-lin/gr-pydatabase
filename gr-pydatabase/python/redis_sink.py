@@ -267,6 +267,7 @@ class redis_sink(gr.sync_block):
         pass
 
     def action_to_hop(self, payload):
+        print(f'action to hop {payload}')
         try:
             hopping_key = "Trans:FREQ:HOP"
             system_hopping_key = "SYSTEM:HOPPIONG"
