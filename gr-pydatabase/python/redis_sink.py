@@ -220,7 +220,7 @@ class redis_sink(gr.sync_block):
                             # On receiving the hopping request, Stage 4.
                             print("Hold the system until hopping is completed")
                             self.redis_db.set("RFSYSTEM:STATE", "Hold")
-                            self.redis_db.hset("SYSTEM:HOPPIONG", "Stage", 4)
+                            self.redis_db.hset("SYSTEM:HOPPING", "Stage", 4)
                             self.action_to_hop(payload)
                             return
 
