@@ -203,9 +203,9 @@ class ActionAgent(object):
                     print(f"  hset {system_hopping_key} Stage 5")
 
                     wait_time = payload["Timestamp"] + 0.01*float(payload["Idx"]) - time.time()
+                    wait_time += 0.1
                     print(f"Wait for {wait_time} to change the freq")
-                    if wait_time > 0:
-                        time.sleep(wait_time)
+                    time.sleep(wait_time)
                     print("Switch to new Freq")
                     p.hmset(tune_rf, {"Freq": payload["ControlAction"], "Gain": 0.4})
                     p.hset(system_hopping_key, "Stage", 6)
@@ -232,7 +232,6 @@ class ActionAgent(object):
                         p.reset()
                         time.sleep(0.01)
                     return
-
                 else:
                     print("Something went wrong.")
                     print(f"Role: {role}, Stage: {stage}")
