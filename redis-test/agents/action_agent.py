@@ -353,8 +353,7 @@ class ActionAgent(object):
                     time.sleep(0.01)
 
                 print(f"Send out five packets, switch to new channel...")
-                self.db.hset("TuneRF:11", "Freq", hop_to)
-                self.db.hset("TuneRF:11", "Gain", 0.4)
+                self.db.hmset("TuneRF:11", {"Freq": hop_to, "Gain": 0.4})
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()
             print(f"[Action] Detecting Interference {exp}. At line {e_tb.tb_lineno}")
