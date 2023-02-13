@@ -149,20 +149,33 @@ class ActionAgent(object):
 
             if role == "Initiator":
                 # I'm initiating the hopping
+                print(f"I'm an initiator. Stage: {stage}")
                 if payload["ControlAction"] == "HOLD:ACK" and stage == "3":
+                    
                     hop_to = self.db.hget(system_hopping_key, "Freq").decode("utf-8")
                     p.hset(tune_rf, "Freq", hop_to)
                     p.hset(tune_rf, "Gain", 0.4)
                     p.hset(system_hopping_key, "Stage", 7)
                     p.execute()
                     p.reset()
+                    print(f"Using the new frequency!")
+                    print(f"  hset {tune_rf} Freq {hop_to}")
+                    print(f"  hset {tune_rf} Gain 0.4")
+                    print(f"  hset {system_hopping_key} Stage 7")
 
                     msg["ControlAction"] = "NEW:FREQ"
                     p.set(hopping_key, json.dumps(msg))
                     p.hset(sytem_hopping_key, "Stage", 8)
+                    print("Sending out the check on new channel...")
+                    print(f"  set {hopping_key}, {msg}")
+                    print(f"  hset {system_hopping_key} Stage 8")
+                    p.execute()
+                    p.reset()
                     return
                 elif payload["ControlAction"] == "NEW:FREQ:ACK" and stage == '8':
                     p.set(self.SYSTEM_STATE, "Free")
+                    p.execute()
+                    p.reset()
                     return
                 else:
                     print("Something went wrong.")
@@ -170,6 +183,7 @@ class ActionAgent(object):
                     return
             else:
                 # I'm the follower.
+                print(f"I'm a follower, {stage}")
                 if stage == '4':
                     pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
 
@@ -178,12 +192,21 @@ class ActionAgent(object):
                     p.hset(system_hopping_key, "Stage", 5)
                     p.execute()
                     p.reset()
+                    print(f"Received the initiation, send back the hold ack")
+                    print(f"  set {hopping_key}, {msg}")
+                    print(f"  hset {system_hopping_key} Stage 5")
 
                     p.hset(tune_rf, "Freq", payload["ControlAction"])
                     p.hset(tune_rf, "Gain", 0.4)
                     p.hset(system_hopping_key, "Stage", 6)
                     p.hset(system_hopping_key, "PreFreq", pre_freq)
                     p.hset(system_hopping_key, "Freq", payload["ControlAction"])
+                    print(f"Change to new channel {payload['ControlAction']}")
+                    print(f"  hset {tune_rf} Freq {payload['ControlAction']}")
+                    print(f"  hset {tune_rf} Gain 0.4")
+                    print(f"  hset {system_hopping_key} Stage 6")
+                    print(f"  hset {system_hopping_key} PreFreq {pre_freq}")
+                    print(f"  hset {system_hopping_key} Freq {payload['ControlAction']}")
                     p.execute()
                     p.reset()
                     return
