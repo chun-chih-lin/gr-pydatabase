@@ -147,6 +147,7 @@ class ActionAgent(object):
 
             p = self.db.pipeline()
 
+            print("---------------------------------")
             if role == "Initiator":
                 # I'm initiating the hopping
                 print(f"I'm an initiator. Stage: {stage}")
@@ -168,7 +169,7 @@ class ActionAgent(object):
                     for try_c in range(5):
                         msg["ControlAction"] = "NEW:FREQ"
                         p.set(hopping_key, json.dumps(msg))
-                        p.hset(sytem_hopping_key, "Stage", 8)
+                        p.hset(system_hopping_key, "Stage", 8)
                         print("Sending out the check on new channel...")
                         print(f"  set {hopping_key}, {msg}")
                         print(f"  hset {system_hopping_key} Stage 8")
@@ -188,7 +189,6 @@ class ActionAgent(object):
                     return
             else:
                 # I'm the follower.
-                print("------------------------------------")
                 print(f"I'm a follower, {stage}")
                 if stage == '4':
                     pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
@@ -202,8 +202,11 @@ class ActionAgent(object):
                     print(f"  set {hopping_key}, {msg}")
                     print(f"  hset {system_hopping_key} Stage 5")
 
+
+                    print(f"  Timestamp: {payload['Timestamp']}, Idx: {payload['Idx']}")
+                    wait_time = 0
                     wait_time = payload["Timestamp"] + 0.01*float(payload["Idx"]) - time.time()
-                    wait_time += 0.1
+                    wait_time += 0.15
                     print(f"Wait for {wait_time} to change the freq")
                     time.sleep(wait_time)
                     print("Switch to new Freq")
