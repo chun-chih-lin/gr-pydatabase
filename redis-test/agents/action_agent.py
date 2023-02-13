@@ -39,6 +39,8 @@ class ActionAgent(object):
         self.pubsub.psubscribe(**{self.agentpattern: self.agent_event_handler})
         self.thread = self.pubsub.run_in_thread(sleep_time=0.001)
 
+        self.get_config()
+
         self.REDEVICE_STATE = "RFDEVICE:STATE"
         self.MONITOR_ACK = "TRANS:ACK"
         self.ACK_STATE_WAIT = "Waiting"
@@ -58,6 +60,11 @@ class ActionAgent(object):
         self.MAX_CSI_RECORD = 5
 
         print('Initialization done.')
+
+    def get_config(self):
+        with open("config.json", 'r') as f:
+            config = json.load(f)
+        print(f"config: {config} {type(config)}")
         
     def check_notify(self):
         self.db.config_set('notify-keyspace-events', 'KEA')
