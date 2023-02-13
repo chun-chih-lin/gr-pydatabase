@@ -9,71 +9,27 @@ import string
 from BasicAgent import BasicAgent
 
 class TransAgent(BasicAgent):
-    """docstring for TransAgent"""
     def __init__(self, subprefix, agentkey):
         super(TransAgent, self).__init__("TransAgent", subprefix, agentkey)
-        """
-        print('Initialing TransAgent...')
-        self.db_host = 'localhost'
-        self.db_port = 6379
-        self.db_idx = 0
-        self.subprefix = subprefix
-        self.agentkey = agentkey
-
-        self.db = redis.Redis(host=self.db_host, port=self.db_port, db=self.db_idx)
-        self.subpattern = f'__keyspace@{self.db_idx}__:{self.subprefix}'
-        self.agentpattern = f'__keyspace@{self.db_idx}__:{self.agentkey}'
-
-        self.check_notify()
-
-        self.pubsub = self.db.pubsub()
-        self.pubsub.psubscribe(**{self.subpattern: self.event_handler})
-        self.pubsub.psubscribe(**{self.agentpattern: self.agent_event_handler})
-        self.thread = self.pubsub.run_in_thread(sleep_time=0.001)
-
-        """
-        self.RETRY_MAX = 5
-        self.WAIT_MAX = 0.01
-        self.REDEVICE_STATE = "RFDEVICE:STATE"
-        self.MONITOR_ACK = "TRANS:ACK"
-        self.ACK_STATE_WAIT = "Waiting"
-        self.ACK_STATE_FAIL = "Failed"
-        self.ACK_STATE_SUCC = "Success"
-
-        self.KEYWORD_QUIT = "Quit"
-        self.KEYWORD_BUSY = "Busy"
-        self.KEYWORD_IDLE = "Idle"
-        self.KEYWORD_STOP = "Stop"
-        self.KEYWORD_WAIT_ACK = "WAITACK"
-
-        self.SYSTEM_STATE = "RFSYSTEM:STATE"
-        self.SYSTEM_FREE = "Free"
-        self.SYSTEM_TRANS_HOLD = "Hold"
-
-        print(f"--- Transmission {self.KEYWORD_QUIT}")
         print('Initialization done.')
-
-    def check_notify(self):
-        self.db.config_set('notify-keyspace-events', 'KEA')
-        pass
 
     def utf8_decode(self, msg):
         return msg.decode("utf-8")
 
     def check_rf_state(self, state):
-        if self.utf8_decode(self.db.get(self.REDEVICE_STATE)) == state:
+        if self.utf8_decode(self.db.get(self.c['REDEVICE_STATE'])) == state:
             pass
         else:
-            self.db.set(self.REDEVICE_STATE, state)
+            self.db.set(self.c['REDEVICE_STATE'], state)
 
     def agent_event_handler(self, msg):
         try:
             key = self.utf8_decode(msg["channel"])
             if key:
                 db_key = self.utf8_decode(self.db.get(self.agentkey))
-                if db_key == self.KEYWORD_QUIT:
+                if db_key == self.c['KEYWORD_QUIT']:
                     print('Quiting TransAgent. See you again.')
-                    self.db.set('AGENT:TRANS', self.KEYWORD_STOP)
+                    self.db.set('AGENT:TRANS', self.c['KEYWORD_STOP'])
                     self.thread.stop()
         except Exception as exp:
             print(f'[Trans] Exception occurs: {exp}')
@@ -92,7 +48,7 @@ class TransAgent(BasicAgent):
             print(f'[Trans] Exception occurs: {exp}')
 
     def process_message(self, db_key):
-        self.check_rf_state(state=self.KEYWORD_BUSY)
+        self.check_rf_state(state=self.c['KEYWORD_BUSY'])
         PMDU_msg = self.utf8_decode(self.db.get(db_key))
 
         # Trigger RF front-end to transmit the data
@@ -101,7 +57,7 @@ class TransAgent(BasicAgent):
         # Trigger the RF front-end to transmit
         print(f'=================== Transmitting Trans:{db_key}...')
         p.set(f'Trans:{db_key}', PMDU_msg)
-        p.set(self.MONITOR_ACK, self.ACK_STATE_WAIT)
+        p.set(self.c['MONITOR_ACK'], self.c['ACK_STATE_WAIT'])
         p.execute()
 
         # Monitor the key and retransmit if needed
@@ -115,22 +71,22 @@ class TransAgent(BasicAgent):
         waiting_time = 0.0
         waiting_interval = 0.001
 
-        while retry_count < self.RETRY_MAX:
-            if self.db.get(self.SYSTEM_STATE).decode('utf-8') == self.SYSTEM_TRANS_HOLD:
+        while retry_count < self.c['RETRY_MAX']:
+            if self.db.get(self.c['SYSTEM_STATE']).decode('utf-8') == self.c['SYSTEM_TRANS_HOLD']:
                 print('System holds')
                 return
-            elif self.db.get(self.MONITOR_ACK).decode("utf-8") != self.ACK_STATE_WAIT:
-                print(f'[Trans] {self.db.get(self.MONITOR_ACK).decode("utf-8")}')
+            elif self.db.get(self.c['MONITOR_ACK']).decode("utf-8") != self.c['ACK_STATE_WAIT']:
+                print(f'[Trans] {self.db.get(self.c['MONITOR_ACK']).decode("utf-8")}')
                 # It must receive the ACK
                 return
-            elif waiting_time <= self.WAIT_MAX:
-                print(f'[Trans] {self.db.get(self.MONITOR_ACK).decode("utf-8")}, {waiting_time} < {self.WAIT_MAX}, not timeout.')
+            elif waiting_time <= self.c['WAIT_MAX']:
+                print(f'[Trans] {self.db.get(self.c['MONITOR_ACK']).decode("utf-8")}, {waiting_time} < {self.c['WAIT_MAX']}, not timeout.')
                 # Haven't received the ACK yet, and not timeout yet.
                 time.sleep(waiting_interval)
                 waiting_time += waiting_interval
             else:
                 # Haven't received the ACK and timeout occurs.
-                print(f'[Trans] Timeout. Retry [{retry_count+1}/{self.RETRY_MAX}]')
+                print(f'[Trans] Timeout. Retry [{retry_count+1}/{self.c['RETRY_MAX']}]')
                 retry_count += 1
                 waiting_time = 0.0
                 p = self.db.pipeline()
@@ -142,12 +98,12 @@ class TransAgent(BasicAgent):
         self.abort_monitor(db_key, key_ack)
         
     def abort_monitor(self, db_key, key_ack):
-        print(f'[Trans] ACK status: {self.db.get(self.MONITOR_ACK).decode("utf-8")}, Abort monitoring...')
+        print(f'[Trans] ACK status: {self.db.get(self.c['MONITOR_ACK']).decode("utf-8")}, Abort monitoring...')
         p = self.db.pipeline()
         p.set("RECEPTION", db_key)
         p.set(key_ack, "Failed")
-        p.set(self.REDEVICE_STATE, self.KEYWORD_IDLE)
-        p.set(self.MONITOR_ACK, self.ACK_STATE_FAIL)
+        p.set(self.c['REDEVICE_STATE'], self.c['KEYWORD_IDLE'])
+        p.set(self.c['MONITOR_ACK'], self.c['ACK_STATE_FAIL'])
         p.rpop('QUEUE:LIST:TRANS')
         p.execute()
         pass

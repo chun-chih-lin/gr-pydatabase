@@ -14,68 +14,7 @@ from BasicAgent import BasicAgent
 class ActionAgent(BasicAgent):
     def __init__(self, subprefix, agentkey):
         super(ActionAgent, self).__init__("ActionAgent", subprefix, agentkey)
-        """
-            Listen: SYSTEM:ACTION:*
-            Actions:
-                CSI:
-                DEBUG:
-                HOP:
-        """
-        """
-        print('Initialing ActionAgent...')
-        self.db_host = 'localhost'
-        self.db_port = 6379
-        self.db_idx = 0
-        self.subprefix = subprefix
-        self.agentkey = agentkey
-
-        self.db = redis.Redis(host=self.db_host, port=self.db_port, db=self.db_idx)
-        self.subpattern = f'__keyspace@{self.db_idx}__:{self.subprefix}'
-        self.agentpattern = f'__keyspace@{self.db_idx}__:{self.agentkey}'
-
-        self.check_notify()
-
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-        self.pubsub = self.db.pubsub()
-        self.pubsub.psubscribe(**{self.subpattern: self.event_handler})
-        self.pubsub.psubscribe(**{self.agentpattern: self.agent_event_handler})
-        self.thread = self.pubsub.run_in_thread(sleep_time=0.001)
-
-        self.get_config()
-        """
-
-        self.REDEVICE_STATE = self.c["REDEVICE_STATE"]
-        self.MONITOR_ACK = self.c["MONITOR_ACK"]
-        self.ACK_STATE_WAIT = self.c["ACK_STATE_WAIT"]
-        self.ACK_STATE_FAIL = self.c["ACK_STATE_FAIL"]
-        self.ACK_STATE_SUCC = self.c["ACK_STATE_SUCC"]
-
-        self.KEYWORD_QUIT = self.c["KEYWORD_QUIT"]
-        self.KEYWORD_BUSY = self.c["KEYWORD_BUSY"]
-        self.KEYWORD_IDLE = self.c["KEYWORD_IDLE"]
-        self.KEYWORD_STOP = self.c["KEYWORD_STOP"]
-        self.KEYWORD_WAIT_ACK = self.c["KEYWORD_WAIT_ACK"]
-
-        self.SYSTEM_STATE = self.c["SYSTEM_STATE"]
-        self.SYSTEM_FREE = self.c["SYSTEM_FREE"]
-        self.SYSTEM_TRANS_HOLD = self.c["SYSTEM_TRANS_HOLD"]
-
-        self.MAX_CSI_RECORD = self.c["MAX_CSI_RECORD"]
-
         print('Initialization done.')
-
-    """
-    def get_config(self):
-        with open("config.json", 'r') as f:
-            config = json.load(f)
-        self.c = config
-        print(f"config: {self.c} {type(config)}")
-
-    def check_notify(self):
-        self.db.config_set('notify-keyspace-events', 'KEA')
-        pass
-    """
         
     def utf8_decode(self, msg):
         return msg.decode('utf-8')
@@ -85,9 +24,9 @@ class ActionAgent(BasicAgent):
             key = self.utf8_decode(msg['channel'])
             if key:
                 db_key = self.utf8_decode(self.db.get(self.agentkey))
-                if db_key == self.KEYWORD_QUIT:
+                if db_key == self.c["KEYWORD_QUIT"]:
                     print('Quiting ActionAgent. See you again.')
-                    self.db.set('AGENT:ACTION', self.KEYWORD_STOP)
+                    self.db.set('AGENT:ACTION', self.c["KEYWORD_STOP"])
                     self.thread.stop()
         except Exception as exp:
             print(f'[Action] Exception occurs: {exp}')
@@ -108,7 +47,7 @@ class ActionAgent(BasicAgent):
                     self.db.lpush(self.c["SYSTEM_CSI_QUEUE"], csi_key)
                 elif self.is_newer_csi(csi_key, newest_key[0]):
                     self.db.lpush(self.c["SYSTEM_CSI_QUEUE"], csi_key)
-                    if len(self.db.lrange(self.c["SYSTEM_CSI_QUEUE"], 0, -1)) > self.MAX_CSI_RECORD:
+                    if len(self.db.lrange(self.c["SYSTEM_CSI_QUEUE"], 0, -1)) > self.c["MAX_CSI_RECORD"]:
                         oldest_csi_key = self.db.rpop(self.c["SYSTEM_CSI_QUEUE"])
                         print(f'Adding new key: {csi_key}. Delete oldest key: {oldest_csi_key}')
                         print(f'*** db.delete({oldest_csi_key})')
@@ -188,7 +127,7 @@ class ActionAgent(BasicAgent):
                     return
                 elif payload["ControlAction"] == self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"] and stage == '8':
                     print("Receive NEW:FREQ:ACK")
-                    p.set(self.SYSTEM_STATE, self.c["SYSTEM_FREE"])
+                    p.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_FREE"])
                     p.execute()
                     p.reset()
                     return
@@ -332,7 +271,7 @@ class ActionAgent(BasicAgent):
                 print('Hold the transmission process')
                 # Hold the system, Stage 2.
                 self.db.hset(self.c["SYSTEM_HOPPING"], "Stage", 2)
-                self.db.set(self.SYSTEM_STATE, self.SYSTEM_TRANS_HOLD)
+                self.db.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_TRANS_HOLD"])
 
                 # Initiating the attempt, Stage 3.
                 hop_to = "2442000000"
