@@ -159,7 +159,7 @@ class ActionAgent(object):
 
                     msg["ControlAction"] = "NEW:FREQ"
                     p.set(hopping_key, json.dumps(msg))
-                    p.hset(sytem_hopping_key, "Stage" 8)
+                    p.hset(sytem_hopping_key, "Stage", 8)
                     return
                 elif payload["ControlAction"] == "NEW:FREQ:ACK" and stage == '8':
                     p.set(self.SYSTEM_STATE, "Free")
