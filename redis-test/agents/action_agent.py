@@ -222,7 +222,7 @@ class ActionAgent(object):
                     return
                 elif stage == '6':
                     msg["ControlAction"] = "NEW:FREQ:ACK"
-                    p.set(hopping_key, json.dumps())
+                    p.set(hopping_key, json.dumps(msg))
                     p.hset(system_hopping_key, "Stage", 9)
                     p.execute()
                     p.reset()
