@@ -213,25 +213,25 @@ class redis_sink(gr.sync_block):
                     print(f"payload: {payload}")
                     if len(payload) == 0:
                         return
-                    payload_dict = json.loads(payload)
-                    if payload_dict.get('ControlType') is not None:
-                        # It is a control data frame.
-                        if payload_dict['ControlType'] == "HOP":
-                            # On receiving the hopping request, Stage 4.
-                            print("Hold the system until hopping is completed")
-                            self.redis_db.set("RFSYSTEM:STATE", "Hold")
-                            self.redis_db.hset("SYSTEM:HOPPING", "Stage", 4)
-                            self.action_to_hop(payload)
-                            return
-
-                    self.msg_debug('If it is a ControlType frame, this line should not be executed')
-
+                                        
                     ### header_info: for future used as indication for the receiver and transmitter
                     is_for_me, header_info, frame_type = parse_header(pmt_vector)
                     self.msg_debug(f'header_info: \n{header_info}')
                     self.msg_debug(f'payload: {payload}')
                     self.msg_debug(f'Receive a type: {header_info["type"]} frame')
                     if is_for_me:
+                        payload_dict = json.loads(payload)
+                        if payload_dict.get('ControlType') is not None:
+                            # It is a control data frame.
+                            if payload_dict['ControlType'] == "HOP":
+                                # On receiving the hopping request, Stage 4.
+                                print("Hold the system until hopping is completed")
+                                self.redis_db.set("RFSYSTEM:STATE", "Hold")
+                                self.redis_db.hset("SYSTEM:HOPPING", "Stage", 4)
+                                self.action_to_hop(payload)
+                            return
+                            self.msg_debug('If it is a ControlType frame, this line should not be executed')
+                        # ---------------------
                         real_csi = meta['csi'].real.tolist()
                         imag_csi = meta['csi'].imag.tolist()
                         meta.pop('csi', None)
