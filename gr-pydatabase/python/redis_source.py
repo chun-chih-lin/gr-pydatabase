@@ -22,6 +22,7 @@
 import redis
 import pmt
 import threading
+import sys
 
 import numpy
 from gnuradio import gr
@@ -76,14 +77,20 @@ class redis_source(gr.sync_block):
 
     def event_handler(self, msg):
         self.msg = ""
+        print(f"[source] {msg}")
         try:
             key = msg["channel"].decode("utf-8")
             split_key = key.split(":")
             db_key = ":".join([i for i in split_key[1:]])
+            print(f'[Source] {db_key}')
             if db_key:
                 self.msg = self.redis_db.get(db_key).decode("utf-8")
+                print(f"[Source] self.msg {self.msg}, {type(self.msg)}")
                 self.message_port_pub(pmt.string_to_symbol("pdu"), pmt.intern(self.msg))
+                print("Send out the pdu")
         except Exception as exp:
+            _, _, e_tb = sys.exc_info()
+            print(f'[Source] Exception: {exp}, Line {e_tb.tb_lineno}')
             return
 
     def work(self, input_items, output_items):
