@@ -12,6 +12,13 @@ import scapy.all as scapy
 class ActionAgent(object):
     def __init__(self, subprefix, agentkey):
         super(ActionAgent, self).__init__()
+        """
+            Listen: SYSTEM:ACTION:*
+            Actions:
+                CSI:
+                DEBUG:
+                HOP:
+        """
         print('Initialing ActionAgent...')
         self.db_host = 'localhost'
         self.db_port = 6379
@@ -100,6 +107,8 @@ class ActionAgent(object):
                     print(f'keys in queue: {newest_key}')
                     print(f'*** db.delete({csi_key})')
                     self.db.delete(csi_key)
+            elif action == "HOP":
+                self.action_to_hop()
             elif action == "DEBUG":
                 # SYSTEM:ACTION:DEBUG
                 self.detect_interference(debug=True)
@@ -115,6 +124,87 @@ class ActionAgent(object):
 
     def get_action(self, msg):
         return self.utf8_decode(msg['channel']).split(":")[3]
+
+    #-------------------------------------------------------------------------------
+    def action_to_hop(self):
+        try:
+            payload = self.db.get("SYSTEM:ACTION:HOP").decode("utf-8")
+            payload = json.loads(payload)
+
+            hopping_key = "Trans:FREQ:HOP"
+            system_hopping_key = "SYSTEM:HOPPING"
+            tune_rf = "TuneRF:11"
+
+            role = self.db.hget(system_hopping_key, "Role")
+            if role is None:
+                self.db.hset(system_hopping_key, "Role", payload["Role"])
+            else:
+                role = role.decode("utf-8")
+
+            msg = dict()
+            msg["ControlType"] = "HOP"
+            stage = self.db.hget(system_hopping_key, "Stage").decode("utf-8")
+
+            p = self.db.pipeline()
+
+            if role == "Initiator":
+                # I'm initiating the hopping
+                if payload["ControlAction"] == "HOLD:ACK" and stage == "3":
+                    hop_to = self.db.hget(system_hopping_key, "Freq").decode("utf-8")
+                    p.hset(tune_rf, "Freq", hop_to)
+                    p.hset(tune_rf, "Gain", 0.4)
+                    p.hset(system_hopping_key, "Stage", 7)
+                    p.execute()
+                    p.reset()
+
+                    msg["ControlAction"] = "NEW:FREQ"
+                    p.set(hopping_key, json.dumps(msg))
+                    p.hset(sytem_hopping_key, "Stage" 8)
+                    return
+                elif payload["ControlAction"] == "NEW:FREQ:ACK" and stage == '8':
+                    p.set(self.SYSTEM_STATE, "Free")
+                    return
+                else:
+                    print("Something went wrong.")
+                    print(f"Role: {role} {type(role)}, Stage: {stage}")
+                    return
+            else:
+                # I'm the follower.
+                if stage == '4':
+                    pre_Fre = self.db.get("SYSTEM:FREQ").decode("utf-8")
+
+                    msg["ControlAction"] = "HOLD:ACK"
+                    p.set(hopping_key, json.dumps(msg))
+                    p.hset(system_hopping_key, "Stage", 5)
+                    p.execute()
+                    p.reset()
+
+                    p.hset(tune_rf, "Freq", payload["ControlAction"])
+                    p.hset(tune_rf, "Gain", 0.4)
+                    p.hset(system_hopping_key, "Stage", 6)
+                    p.hset(system_hopping_key, "PreFreq", pre_freq)
+                    p.hset(system_hopping_key, "Freq", payload["ContralAction"])
+                    p.execute()
+                    p.reset()
+                    return
+                elif stage == '6':
+                    msg["ControlAction"] = "NEW:FREQ:ACK"
+                    p.set(hopping_key, json.dumps())
+                    p.hset(system_hopping_key, "Stage", 9)
+                    p.execute()
+                    p.reset()
+                    return
+
+                else:
+                    print("Something went wrong.")
+                    print(f"Role: {role}, Stage: {stage}")
+                    return
+        except Exception as exp:
+            _, _, e_tb = sys.exc_info()
+            print(f'[ActionAgent] {exp}, Line {e_tb.tb_lineno}')
+        pass
+
+
 
     #--------------------------------------------------------------------------------
     # For Action: Detecting Interference
