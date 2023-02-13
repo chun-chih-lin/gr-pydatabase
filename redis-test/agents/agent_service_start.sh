@@ -5,6 +5,7 @@ redis-cli -h localhost -p 6379 SET AGENT:QUEUE Starting
 redis-cli -h localhost -p 6379 SET AGENT:ACTION Starting
 
 redis-cli -h localhost -p 6379 SET SYSTEM:FREQ 2472000000
+redis-cli -h localhost -p 6379 SET RFSYSTEM:STATE Free
 
 # Start agents.
 python ./default_setup.py

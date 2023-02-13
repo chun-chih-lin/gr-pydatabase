@@ -73,7 +73,7 @@ class ActionAgent(object):
 
     def event_handler(self, msg):
         try:
-            # print(f'[Action] Event! {msg}')
+            print(f'[Action] Event! {msg}')
             action = self.get_action(msg)
             if action == "CSI":
                 csi_key = self.db.get("SYSTEM:ACTION:CSI").decode("utf-8")
