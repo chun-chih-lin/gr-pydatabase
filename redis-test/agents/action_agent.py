@@ -350,7 +350,7 @@ class ActionAgent(object):
                     print(f"hset SYSTEM:HOPPING  Stage 3")
                     print(f"hset SYSTEM:HOPPING  Freq {hop_to}")
                     print(f"hset SYSTEM:HOPPING  PreFreq {pre_freq}")
-                    print(f"set {self.c["TRANS_FREQ_HOP"]} {json_info}")
+                    print(f"set {self.c['TRANS_FREQ_HOP']} {json_info}")
                     time.sleep(0.01)
 
                 print(f"Send out five packets, switch to new channel...")
