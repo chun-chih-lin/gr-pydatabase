@@ -81,7 +81,6 @@ class redis_sink(gr.sync_block):
     def parse_pdu_into_db(self, pdu):
         def check_dest(addr):
             # self.msg_debug(f'{self.macaddr}, {addr}')
-            print(f'[Sink] I am {self.macaddr}, dst is {addr}')
             return self.macaddr == addr
         def get_type(frame_type, frame_subtype):
             if frame_type == 0:
