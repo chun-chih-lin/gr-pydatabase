@@ -22,6 +22,7 @@ class BasicAgent(object):
         self.subpattern = f'__keyspace@{self.db_idx}__:{self.subprefix}'
         self.agentpattern = f'__keyspace@{self.db_idx}__:{self.agentkey}'
 
+
         self.check_notify()
 
         self.pubsub = self.db.pubsub()
@@ -40,7 +41,7 @@ class BasicAgent(object):
         return msg.decode("utf-8")
 
     def check_notify(self):
-        self.db.config_set('notify-keyspace-events', 'KEA')
+        self.db.config_set('notify-keyspace-events', 'KEAx')
 
     def agent_event_handler(self, msg):
         pass
