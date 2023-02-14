@@ -302,6 +302,7 @@ class ActionAgent(BasicAgent):
                 print(f"Send out five packets, switch to new channel...")
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
 
+                print("Expire check 10 s")
                 self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=10)
 
         except Exception as exp:
