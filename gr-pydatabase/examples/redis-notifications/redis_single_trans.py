@@ -74,6 +74,7 @@ def run_without_pipeline(seq_id, Message, sleep_bw_pkt, Loop_MAX):
         set_value = generate_MSDU(x, seq_id, Message, sleep_bw_pkt, Loop_MAX)
         action_key = "Single:Trans:"+str(x)
         r.delete(action_key)
+        r.delete(f"{action_key}:ACK")
         r.set(action_key, set_value)
         r.lpush("QUEUE:LIST:TRANS", action_key)
         sleep(sleep_bw_pkt)
