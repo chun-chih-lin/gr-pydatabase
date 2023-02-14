@@ -61,13 +61,29 @@ class ActionAgent(BasicAgent):
             elif action == self.c["SYSTEM_ACTION_TYPE_HOP"]:
                 self.action_to_hop()
             elif action == self.c["SYSTEM_ACTION_TYPE_DEBUG"]:
-
                 self.detect_interference(debug=True)
-            elif action == self.c["SYSTEM_ACTION_TYPE_CHECK"] and msg["data"].decode("utf-8") == "expire":
+            elif action == self.c["SYSTEM_ACTION_TYPE_CHECK"]:
                 print("Checking")
-                
+                if msg["data"].decode("utf-8") != "expired":
+                    return
+
+                if self.db.get(self.c["SYSTEM_ACTION_CHECK"]) is not None:
+                    print("Not expired yet")
+                    return
+
+                if self.db.get(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"]) is not None:
+                    print("Successfully received the NEW:FREQ:ACK. Everything is fine.")
+                    return
+                else:
+                    print("After 10 seconds and do not receive anything. Rollback to old freq")
+                    print("Rolling back...")
+                    old_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
+                    print(f"\tFreq: {old_freq}")
+                    print(f"\thmset {self.c['TUNE_RF']} {{Freq: {old_freq}}}")
+                    self.db.hset(self.c['TUNE_RF'], "Freq", old_freq)
+                    return
             else:
-                print(f"Other action: {aciton}.")
+                print(f"Other action: {action}.")
                         
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()
