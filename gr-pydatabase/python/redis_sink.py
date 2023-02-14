@@ -211,9 +211,7 @@ class redis_sink(gr.sync_block):
                 if pmt.is_u8vector(vector):
                     vector = pmt.u8vector_elements(vector)
                     payload = "".join([chr(r) for r in vector[24:]])
-                    print(f"payload: {payload}")
                     if len(payload) == 0:
-                        print("payload is zero")
                         return
                                         
                     ### header_info: for future used as indication for the receiver and transmitter
@@ -221,13 +219,12 @@ class redis_sink(gr.sync_block):
                     self.msg_debug(f'header_info: \n{header_info}')
                     self.msg_debug(f'payload: {payload}')
                     self.msg_debug(f'Receive a type: {header_info["type"]} frame')
-                    print(f'is for me: {is_for_me}')
                     if is_for_me:
                         payload_dict = json.loads(payload)
                         if payload_dict.get('ControlType') is not None:
                             # It is a control data frame.
                             if payload_dict['ControlType'] == "HOP":
-                                print("Hold the system until hopping is completed")
+                                # print("Hold the system until hopping is completed")
                                 if payload_dict["ControlAction"].isdigit():
                                     self.redis_db.set("RFSYSTEM:STATE", "Hold")
                                     self.redis_db.hset("SYSTEM:HOPPING", "Stage", 4)
@@ -265,6 +262,7 @@ class redis_sink(gr.sync_block):
                         self.msg_debug(f'It is not for me. Send to {header_info["addr1"]}, I\'m {self.macaddr}')
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()
+            self.pipeline.reset()
             print(f'[redis sink] Exception: {exp}. At line {e_tb.tb_lineno}')
         self.pipeline.execute()
         self.pipeline.reset()

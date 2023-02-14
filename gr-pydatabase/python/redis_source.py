@@ -78,19 +78,19 @@ class redis_source(gr.sync_block):
 
     def event_handler(self, msg):
         self.msg = ""
-        print(f"[source] {msg}")
+        # print(f"[source] {msg}")
         try:
             if msg["data"].decode("utf-8") == "del":
                 return
             key = msg["channel"].decode("utf-8")
             split_key = key.split(":")
             db_key = ":".join([i for i in split_key[1:]])
-            print(f'[Source] {db_key}')
+            # print(f'[Source] {db_key}')
             if db_key:
                 self.msg = self.redis_db.get(db_key).decode("utf-8")
-                print(f"[Source] self.msg {self.msg}, {type(self.msg)}")
+                # print(f"[Source] self.msg {self.msg}, {type(self.msg)}")
                 self.message_port_pub(pmt.string_to_symbol("pdu"), pmt.intern(self.msg))
-                print(f"Send out the pdu, {time.time()}")
+                # print(f"Send out the pdu, {time.time()}")
         except Exception as exp:
             _, _, e_tb = sys.exc_info()
             print(f'[Source] Exception: {exp}, Line {e_tb.tb_lineno}')
