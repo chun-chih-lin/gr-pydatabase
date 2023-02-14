@@ -14,7 +14,7 @@ from BasicAgent import BasicAgent
 class ActionAgent(BasicAgent):
     def __init__(self, subprefix, agentkey):
         super(ActionAgent, self).__init__("ActionAgent", subprefix, agentkey)
-        print('Initialization done.')
+        print('ActionAgent Initialization done.')
 
     def agent_event_handler(self, msg):
         try:
@@ -70,6 +70,9 @@ class ActionAgent(BasicAgent):
                 if self.db.get(self.c["SYSTEM_ACTION_CHECK"]) is not None:
                     print("Not expired yet")
                     return
+                
+                print(f"Receive ACK?: {self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])}")
+
 
                 if self.db.get(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"]) is not None:
                     print("Successfully received the NEW:FREQ:ACK. Everything is fine.")
@@ -146,6 +149,7 @@ class ActionAgent(BasicAgent):
                     return
                 elif payload["ControlAction"] == self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"] and stage == '8':
                     print("Receive NEW:FREQ:ACK")
+                    p.delete(self.c["SYSTEM_ACTION_CHECK"])
                     p.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_FREE"])
                     p.execute()
                     p.reset()

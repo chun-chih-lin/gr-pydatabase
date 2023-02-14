@@ -218,6 +218,7 @@ class redis_sink(gr.sync_block):
                     self.msg_debug(f'header_info: \n{header_info}')
                     self.msg_debug(f'payload: {payload}')
                     self.msg_debug(f'Receive a type: {header_info["type"]} frame')
+                    print(f"is_for_me: {is_for_me}")
                     if is_for_me:
                         payload_dict = json.loads(payload)
                         print("Is for me and received something.")
