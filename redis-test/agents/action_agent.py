@@ -33,7 +33,6 @@ class ActionAgent(BasicAgent):
             print(f'[Action] Event! {msg}')
             action = self.get_action(msg)
             print(f"[Action] action: {action}")
-            print(f"Config: {self.c}")
             if action == self.c["SYSTEM_ACTION_TYPE_CSI"]:
                 csi_key = self.db.get(self.c["SYSTEM_ACTION_CSI"]).decode("utf-8")
                 timestamp = csi_key.split(":")[1]
@@ -62,10 +61,11 @@ class ActionAgent(BasicAgent):
             elif action == self.c["SYSTEM_ACTION_TYPE_HOP"]:
                 self.action_to_hop()
             elif action == self.c["SYSTEM_ACTION_TYPE_DEBUG"]:
-                self.detect_interference(debug=True)
-            elif action == self.c["SYSTEM_ACTION_TYPE_CHECK"]:
-                print("Checking")
 
+                self.detect_interference(debug=True)
+            elif action == self.c["SYSTEM_ACTION_TYPE_CHECK"] and msg[data].decode("utf-8") == "expire":
+                print("Checking")
+                
             else:
                 print(f"Other action: {aciton}.")
                         
@@ -302,10 +302,7 @@ class ActionAgent(BasicAgent):
                 print(f"Send out five packets, switch to new channel...")
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
 
-                print(f"Set 10 second timeout check")
-                self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True")
-                self.db.expire(self.c["SYSTEM_ACTION_CHECK"], 10)
-                print(f"expire {self.c['SYSTEM_ACTION_CHECK']} 10")
+                self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=10)
 
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()
