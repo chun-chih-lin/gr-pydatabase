@@ -80,6 +80,8 @@ class redis_source(gr.sync_block):
         self.msg = ""
         print(f"[source] {msg}")
         try:
+            if msg["data"].decode("utf-8") == "del":
+                return
             key = msg["channel"].decode("utf-8")
             split_key = key.split(":")
             db_key = ":".join([i for i in split_key[1:]])
