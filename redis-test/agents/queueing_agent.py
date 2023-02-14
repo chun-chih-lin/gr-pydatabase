@@ -13,9 +13,6 @@ class QueueAgent(BasicAgent):
         super(QueueAgent, self).__init__("QueueAgent", subprefix, agentkey)
         print('Initialization done.')
 
-    def utf8_decode(self, msg):
-        return msg.decode("utf-8")
-
     def agent_event_handler(self, msg):
         try:
             key = self.utf8_decode(msg["channel"])

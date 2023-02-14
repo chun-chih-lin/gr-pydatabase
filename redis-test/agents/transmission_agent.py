@@ -13,9 +13,6 @@ class TransAgent(BasicAgent):
         super(TransAgent, self).__init__("TransAgent", subprefix, agentkey)
         print('Initialization done.')
 
-    def utf8_decode(self, msg):
-        return msg.decode("utf-8")
-
     def check_rf_state(self, state):
         if self.utf8_decode(self.db.get(self.c['REDEVICE_STATE'])) == state:
             pass

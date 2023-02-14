@@ -36,6 +36,9 @@ class BasicAgent(object):
             config = json.load(f)
         self.c = config
         
+    def utf8_decode(self, msg):
+        return msg.decode("utf-8")
+
     def check_notify(self):
         self.db.config_set('notify-keyspace-events', 'KEA')
 
