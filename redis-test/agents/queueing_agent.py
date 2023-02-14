@@ -69,7 +69,7 @@ class QueueAgent(BasicAgent):
                     p.reset()
                 elif self.db.get(self.c['SYSTEM_STATE']).decode('utf-8') == self.c['SYSTEM_TRANS_HOLD']:
                     print("[Queue] System Holding")
-                    return
+                    time.sleep(0.01)
                 else:
                     print('[Queue] Still processing, sleep for 0.001 second.')
                     time.sleep(0.001)

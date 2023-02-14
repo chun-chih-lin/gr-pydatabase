@@ -81,6 +81,8 @@ class ActionAgent(BasicAgent):
                     print(f"\tFreq: {old_freq}")
                     print(f"\thmset {self.c['TUNE_RF']} {{Freq: {old_freq}}}")
                     self.db.hset(self.c['TUNE_RF'], "Freq", old_freq)
+                    self.db.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_FREE"])
+                    self.db.set(self.c['RFDEVICE_STATE'], self.c["KEYWORD_IDLE"])
                     return
             else:
                 print(f"Other action: {action}.")
@@ -155,6 +157,7 @@ class ActionAgent(BasicAgent):
             else:
                 # I'm the follower.
                 print(f"I'm a follower, {stage}")
+
                 if stage == '4':
                     pre_freq = self.db.get(self.c["SYSTEM_FREQ"]).decode("utf-8")
                     
@@ -185,6 +188,10 @@ class ActionAgent(BasicAgent):
                     print(f"  hset {self.c['SYSTEM_HOPPING']} Freq {payload['ControlAction']}")
                     p.execute()
                     p.reset()
+
+                    print(f"Try to reply with {self.c['HOPPING_CTRL_ACT_HOLD_ACK']}")
+                    print(f"Sleep for 3 second before rollback")
+                    #self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=3)
                     return
                 elif stage == '6':
                     for try_c in range(5):
