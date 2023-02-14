@@ -18,7 +18,7 @@
     // Monitor normal transmission ACK
     "MONITOR_ACK": "TRANS:ACK",
     "KEYWORD_WAIT_ACK": "WAITACK",
-    "REDEVICE_STATE": "RFDEVICE:STATE",
+    "RFDEVICE_STATE": "RFDEVICE:STATE",
     // Normal transmission ACK State
     "ACK_STATE_WAIT": "Waiting",
     "ACK_STATE_FAIL": "Failed",

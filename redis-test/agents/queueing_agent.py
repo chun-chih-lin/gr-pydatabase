@@ -44,7 +44,7 @@ class QueueAgent(BasicAgent):
                 # While "QUEUE:LIST:TRANS" exist, means there is message needs to be transmitted
                 print(f"[Queue] {self.db.get(self.c['RFDEVICE_STATE'])}")
                 rf_device_state = self.utf8_decode(self.db.get(self.c['RFDEVICE_STATE']))
-                        
+                print(f"[Queue] RF state: {rf_device_state}")
                 if rf_device_state == self.c['KEYWORD_IDLE']:
                     # There are some keys in the queue and the RF is Idle.
                     oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
@@ -57,7 +57,9 @@ class QueueAgent(BasicAgent):
                     # Set rf device to Busy
                     p.set(self.c['RFDEVICE_STATE'], self.c['KEYWORD_BUSY'])
                     p.execute()
+                    p.reset()
                 elif self.db.get(self.c['SYSTEM_STATE']).decode('utf-8') == self.c['SYSTEM_TRANS_HOLD']:
+                    print("[Queue] System Holding")
                     return
                 else:
                     print('[Queue] Still processing, sleep for 0.001 second.')

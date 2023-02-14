@@ -5,6 +5,7 @@ import time
 import json
 import random
 import string
+import sys, os
 
 from BasicAgent import BasicAgent
 
@@ -14,10 +15,10 @@ class TransAgent(BasicAgent):
         print('Initialization done.')
 
     def check_rf_state(self, state):
-        if self.utf8_decode(self.db.get(self.c['REDEVICE_STATE'])) == state:
+        if self.utf8_decode(self.db.get(self.c['RFDEVICE_STATE'])) == state:
             pass
         else:
-            self.db.set(self.c['REDEVICE_STATE'], state)
+            self.db.set(self.c['RFDEVICE_STATE'], state)
 
     def agent_event_handler(self, msg):
         try:
@@ -42,7 +43,8 @@ class TransAgent(BasicAgent):
                 db_key = self.utf8_decode(self.db.get(self.subprefix))
                 self.process_message(db_key)
         except Exception as exp:
-            print(f'[Trans] Exception occurs: {exp}')
+            _, _, e_tb = sys.exc_info()
+            print(f'[Trans] Exception occurs: {exp}. Line {e_tb.tb_lineno}')
 
     def process_message(self, db_key):
         self.check_rf_state(state=self.c['KEYWORD_BUSY'])
@@ -99,7 +101,7 @@ class TransAgent(BasicAgent):
         p = self.db.pipeline()
         p.set("RECEPTION", db_key)
         p.set(key_ack, "Failed")
-        p.set(self.c['REDEVICE_STATE'], self.c['KEYWORD_IDLE'])
+        p.set(self.c['RFDEVICE_STATE'], self.c['KEYWORD_IDLE'])
         p.set(self.c['MONITOR_ACK'], self.c['ACK_STATE_FAIL'])
         p.rpop('QUEUE:LIST:TRANS')
         p.execute()
