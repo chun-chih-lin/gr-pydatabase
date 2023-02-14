@@ -214,7 +214,7 @@ class ActionAgent(BasicAgent):
                     return
                 else:
                     print("Something went wrong.")
-                    print(f"Role: {role}, Stage: {stage}, payload: {payload]")
+                    print(f"Role: {role}, Stage: {stage}, payload: {payload}")
                     return
         except Exception as exp:
             _, _, e_tb = sys.exc_info()
