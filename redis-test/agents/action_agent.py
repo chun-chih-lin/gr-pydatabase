@@ -303,6 +303,7 @@ class ActionAgent(BasicAgent):
 
                 print(f"Set 10 second timeout check")
                 self.db.expire(self.c["SYSTEM_ACTION_CHECK"], 10)
+                print(f"expire {self.c['SYSTEM_ACTION_CHECK']} 10")
 
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()
