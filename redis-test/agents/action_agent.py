@@ -62,6 +62,9 @@ class ActionAgent(BasicAgent):
             elif action == self.c["SYSTEM_ACTION_TYPE_DEBUG"]:
                 # SYSTEM:ACTION:DEBUG
                 self.detect_interference(debug=True)
+            elif action == self.c["SYSTEM_ACTION_TYPE_CHECK"]:
+                print("Checking")
+
             else:
                 print(f"Other action: {aciton}.")
                         
@@ -297,6 +300,10 @@ class ActionAgent(BasicAgent):
 
                 print(f"Send out five packets, switch to new channel...")
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
+
+                print(f"Set 10 second timeout check")
+                self.db.expire(self.c["SYSTEM_ACTION_CHECK"], 10)
+
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()
             print(f"[Action] Detecting Interference {exp}. At line {e_tb.tb_lineno}")
