@@ -12,7 +12,7 @@
     "WAIT_MAX": 0.001,
     "MONITOR_ACK": "TRANS:ACK",
     "KEYWORD_WAIT_ACK": "WAITACK",
-    "REDEVICE_STATE": "RFDEVICE:STATE",
+    "RFDEVICE_STATE": "RFDEVICE:STATE",
     "ACK_STATE_WAIT": "Waiting",
     "ACK_STATE_FAIL": "Failed",
     "ACK_STATE_SUCC": "Success",

@@ -5,6 +5,7 @@ import time
 import json
 import random
 import string
+import sys, os
 
 from BasicAgent import BasicAgent
 
@@ -23,7 +24,8 @@ class QueueAgent(BasicAgent):
                     self.db.set('AGENT:QUEUE', self.c['KEYWORD_STOP'])
                     self.thread.stop()
         except Exception as exp:
-            print(f'[Queue] Exception occurs: {exp}')
+            _, _, e_tb = sys.exc_info()
+            print(f'[Queue] Exception occurs: {exp}, Line {e_tb.tb_lineno}')
 
     def event_handler(self, msg):
         try:
@@ -33,32 +35,38 @@ class QueueAgent(BasicAgent):
                 db_key = "QUEUE:LIST:TRANS"
                 self.process_message(db_key)
         except Exception as exp:
-            print(f'[Queue] Exception occurs: {exp}')
+            _, _, e_tb = sys.exc_info()
+            print(f'[Queue] Exception occurs: {exp}, Line {e_tb.tb_lineno}')
 
     def process_message(self, db_key):
-        while self.db.exists(db_key):
-            # While "QUEUE:LIST:TRANS" exist, means there is message needs to be transmitted
-            print(f"[Queue] {self.db.get(self.c['RFDEVICE_STATE'])}")
-            rf_device_state = self.utf8_decode(self.db.get(self.c['RFDEVICE_STATE']))
+        try:
+            while self.db.exists(db_key):
+                # While "QUEUE:LIST:TRANS" exist, means there is message needs to be transmitted
+                print(f"[Queue] {self.db.get(self.c['RFDEVICE_STATE'])}")
+                rf_device_state = self.utf8_decode(self.db.get(self.c['RFDEVICE_STATE']))
                         
-            if rf_device_state == self.c['KEYWORD_IDLE']:
-                # There are some keys in the queue and the RF is Idle.
-                oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
-                # Trigger the Transmission Agent to transmit
-                # Set the state of RF as Busy
-                p = self.db.pipeline()
-                # Tell the transmission agent which key to be transmitted
-                # print(f'Tell transmission agent to trans {oldest_key}')
-                p.set(self.c['KEYWORD_TRANS'], oldest_key)
-                # Set rf device to Busy
-                p.set(self.c['RFDEVICE_STATE'], self.c['KEYWORD_BUSY'])
-                p.execute()
-            elif self.db.get(self.c['SYSTEM_STATE']).decode('utf-8') == self.c['SYSTEM_TRANS_HOLD']:
-                return
-            else:
-                print('[Queue] Still processing, sleep for 0.001 second.')
-                time.sleep(0.001)
-            print('Done processing all the msg in queue')
+                if rf_device_state == self.c['KEYWORD_IDLE']:
+                    # There are some keys in the queue and the RF is Idle.
+                    oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
+                    # Trigger the Transmission Agent to transmit
+                    # Set the state of RF as Busy
+                    p = self.db.pipeline()
+                    # Tell the transmission agent which key to be transmitted
+                    # print(f'Tell transmission agent to trans {oldest_key}')
+                    p.set(self.c['KEYWORD_TRANS'], oldest_key)
+                    # Set rf device to Busy
+                    p.set(self.c['RFDEVICE_STATE'], self.c['KEYWORD_BUSY'])
+                    p.execute()
+                elif self.db.get(self.c['SYSTEM_STATE']).decode('utf-8') == self.c['SYSTEM_TRANS_HOLD']:
+                    return
+                else:
+                    print('[Queue] Still processing, sleep for 0.001 second.')
+                    time.sleep(0.001)
+                print('Done processing all the msg in queue')
+        except Exception as exp:
+            _, _, e_tb = sys.exc_info()
+            print(f'[Queue] Exception occurs: {exp}, Line {e_tb.tb_lineno}')
+
 
 def main():
     QueueAgent('QUEUE:LIST:TRANS', 'AGENT:QUEUE')
