@@ -63,7 +63,7 @@ class ActionAgent(BasicAgent):
             elif action == self.c["SYSTEM_ACTION_TYPE_DEBUG"]:
 
                 self.detect_interference(debug=True)
-            elif action == self.c["SYSTEM_ACTION_TYPE_CHECK"] and msg[data].decode("utf-8") == "expire":
+            elif action == self.c["SYSTEM_ACTION_TYPE_CHECK"] and msg["data"].decode("utf-8") == "expire":
                 print("Checking")
                 
             else:
@@ -303,6 +303,7 @@ class ActionAgent(BasicAgent):
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
 
                 print("Expire check 10 s")
+                print(f"set {self.c['SYSTEM_ACTION_CHECK']} True ex=10")
                 self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=10)
 
         except Exception as exp:
