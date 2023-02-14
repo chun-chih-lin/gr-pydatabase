@@ -41,7 +41,7 @@ def display_results(msgs):
         print(f'{idx+1:>3}/{ttl:<10} {seq:<10} {data[0:show_data_len]}', end='')
 		
         if idx < last_idx:
-            print(f"--- Reception Rate: {recv_pkt/ttl*100:.2f}")
+            print(f"\n--- Reception Rate: {recv_pkt/ttl*100:.2f}")
             recv_pkt = 0
         else:
             recv_pkt += 1
@@ -50,7 +50,10 @@ def display_results(msgs):
             print('...', end='')
         print('')
         last_idx = idx
-    print(f"--- Reception Rate: {recv_pkt/ttl*100:.2f}")
+    try:
+        print(f"--- Reception Rate: {recv_pkt/ttl*100:.2f}")
+    except Exception as exp:
+        pass
     pass
 
 def main():
