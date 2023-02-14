@@ -220,11 +220,14 @@ class redis_sink(gr.sync_block):
                     self.msg_debug(f'Receive a type: {header_info["type"]} frame')
                     if is_for_me:
                         payload_dict = json.loads(payload)
+                        print(f"[Sink] payload: {payload}")
                         if payload_dict.get('ControlType') is not None:
                             # It is a control data frame.
                             if payload_dict['ControlType'] == "HOP":
-                                # print("Hold the system until hopping is completed")
+                                print("Hold the system until hopping is completed")
                                 if payload_dict["ControlAction"].isdigit():
+                                    print("set RFSYSTEM:STATE Hold")
+                                    print("hset SYSTEM:HOPPING Stage 4")
                                     self.redis_db.set("RFSYSTEM:STATE", "Hold")
                                     self.redis_db.hset("SYSTEM:HOPPING", "Stage", 4)
                                 self.action_to_hop(payload)

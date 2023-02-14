@@ -81,7 +81,7 @@ class usrp_command_source(gr.sync_block):
                 self.tune_rf = pmt.dict_add(self.tune_rf, pmt.to_pmt('gain'), pmt.to_pmt(float(tune_list[1])))
                 self.message_port_pub(pmt.intern("msg"), self.tune_rf)
                 self.tune_rf = pmt.make_dict()
-                print(f"Setting to new frequency: {tune_list[0]} with gain: {tune_list[1]}, {time.time()}")
+                #print(f"Setting to new frequency: {tune_list[0]} with gain: {tune_list[1]}, {time.time()}")
         except Exception as exp:
             print(f"[Tuning RF] Exception: {exp}")
             return

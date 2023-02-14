@@ -45,7 +45,16 @@ class QueueAgent(BasicAgent):
                 print(f"[Queue] {self.db.get(self.c['RFDEVICE_STATE'])}")
                 rf_device_state = self.utf8_decode(self.db.get(self.c['RFDEVICE_STATE']))
                 print(f"[Queue] RF state: {rf_device_state}")
-                if rf_device_state == self.c['KEYWORD_IDLE']:
+                oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
+                print(f"[Queue] Processing for key: {oldest_key}")
+                ack_for_key = self.db.get(f"{oldest_key}:ACK")
+                print(f"[Queue] ACK for the key: {ack_for_key}")
+                if ack_for_key is not None:
+                    if ack_for_key.decode("utf-8") == "Failed":
+                        print("It is failed, pop it.")
+                        self.db.rpop(db_key)
+                
+                elif rf_device_state == self.c['KEYWORD_IDLE']:
                     # There are some keys in the queue and the RF is Idle.
                     oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
                     # Trigger the Transmission Agent to transmit

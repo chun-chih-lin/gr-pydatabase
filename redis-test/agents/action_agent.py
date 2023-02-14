@@ -150,7 +150,7 @@ class ActionAgent(BasicAgent):
 
                     print(f"  Timestamp: {payload['Timestamp']}, Idx: {payload['Idx']}")
                     wait_time = 0
-                    wait_time = payload["Timestamp"] + 0.01*float(payload["Idx"]) - time.time()
+                    #wait_time = payload["Timestamp"] + 0.01*float(payload["Idx"]) - time.time()
                     wait_time += 0.15
                     print(f"Wait for {wait_time} to change the freq")
                     time.sleep(wait_time)
