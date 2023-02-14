@@ -73,17 +73,17 @@ class TransAgent(BasicAgent):
                 print('System holds')
                 return
             elif self.db.get(self.c['MONITOR_ACK']).decode("utf-8") != self.c['ACK_STATE_WAIT']:
-                print(f'[Trans] {self.db.get(self.c['MONITOR_ACK']).decode("utf-8")}')
+                print(f'[Trans] {self.db.get(self.c["MONITOR_ACK"]).decode("utf-8")}')
                 # It must receive the ACK
                 return
             elif waiting_time <= self.c['WAIT_MAX']:
-                print(f'[Trans] {self.db.get(self.c['MONITOR_ACK']).decode("utf-8")}, {waiting_time} < {self.c['WAIT_MAX']}, not timeout.')
+                print(f'[Trans] {self.db.get(self.c["MONITOR_ACK"]).decode("utf-8")}, {waiting_time} < {self.c["WAIT_MAX"]}, not timeout.')
                 # Haven't received the ACK yet, and not timeout yet.
                 time.sleep(waiting_interval)
                 waiting_time += waiting_interval
             else:
                 # Haven't received the ACK and timeout occurs.
-                print(f'[Trans] Timeout. Retry [{retry_count+1}/{self.c['RETRY_MAX']}]')
+                print(f'[Trans] Timeout. Retry [{retry_count+1}/{self.c["RETRY_MAX"]}]')
                 retry_count += 1
                 waiting_time = 0.0
                 p = self.db.pipeline()
@@ -95,7 +95,7 @@ class TransAgent(BasicAgent):
         self.abort_monitor(db_key, key_ack)
         
     def abort_monitor(self, db_key, key_ack):
-        print(f'[Trans] ACK status: {self.db.get(self.c['MONITOR_ACK']).decode("utf-8")}, Abort monitoring...')
+        print(f'[Trans] ACK status: {self.db.get(self.c["MONITOR_ACK"]).decode("utf-8")}, Abort monitoring...')
         p = self.db.pipeline()
         p.set("RECEPTION", db_key)
         p.set(key_ack, "Failed")

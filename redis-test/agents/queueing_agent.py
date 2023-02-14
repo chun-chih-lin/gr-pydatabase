@@ -38,7 +38,7 @@ class QueueAgent(BasicAgent):
     def process_message(self, db_key):
         while self.db.exists(db_key):
             # While "QUEUE:LIST:TRANS" exist, means there is message needs to be transmitted
-            print(f'[Queue] {self.db.get(self.c['RFDEVICE_STATE'])}')
+            print(f"[Queue] {self.db.get(self.c['RFDEVICE_STATE'])}")
             rf_device_state = self.utf8_decode(self.db.get(self.c['RFDEVICE_STATE']))
                         
             if rf_device_state == self.c['KEYWORD_IDLE']:
