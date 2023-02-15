@@ -55,10 +55,10 @@ class QueueAgent(BasicAgent):
                         print("It is failed, pop it.")
                         self.db.rpop(db_key)
                         self.db.incr(self.c["FAIL_ACK_NUM"])
-                        if self.db.get(self.c["FAIL_ACK_NUM"]).decode("utf-8") >= 20:
-                            time.sleep(0.2)
+                        if self.db.get(self.c["FAIL_ACK_NUM"]).decode("utf-8") >= 10:
+                            self.db.set(self.c["SYSTEM_ACTION_DEBUG"], "True")
                             self.db.set(self.c["FAIL_ACK_NUM"], 0)
-
+                            time.sleep(0.2)
                 
                 elif rf_device_state == self.c['KEYWORD_IDLE']:
                     # There are some keys in the queue and the RF is Idle.
