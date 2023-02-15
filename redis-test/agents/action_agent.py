@@ -138,6 +138,7 @@ class ActionAgent(BasicAgent):
                     ControlAction: "HOP:ACK"
                 """
                 print(f"[Action] Receive HOP:ACK on new channel. Reply ACK:ACK")
+                self.db.set(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"], "True")
                 payload["ControlAction"] = "HOP:ACK:ACK"
                 for i in range(self.c["HOPPING_CTRL_ACT_NOTIFY_NUM"]):
                     self.db.set(self.c["TRANS_FREQ_HOP"], json.dumps(payload))
@@ -150,6 +151,8 @@ class ActionAgent(BasicAgent):
                 """
                 self.db.set(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"], "True")
                 print(f"[Action] Receive HOP:ACK:ACK on new channel")
+            else:
+                return
         except Exception as e:
             _, _, e_tb = sys.exc_info()
             print(f'[ActionAgent] {exp}, Line {e_tb.tb_lineno}')
