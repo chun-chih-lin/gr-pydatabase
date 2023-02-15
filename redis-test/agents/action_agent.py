@@ -148,6 +148,7 @@ class ActionAgent(BasicAgent):
                     ControlType: "HOP"
                     ControlAction: "HOP:ACK:ACK"
                 """
+                self.db.set(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"], "True")
                 print(f"[Action] Receive HOP:ACK:ACK on new channel")
         except Exception as e:
             _, _, e_tb = sys.exc_info()
