@@ -73,7 +73,6 @@ class ActionAgent(BasicAgent):
                 
                 print(f"Receive ACK?: {self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])}")
 
-
                 if self.db.get(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"]) is not None:
                     print("Successfully received the NEW:FREQ:ACK. Everything is fine.")
                     return
@@ -265,7 +264,6 @@ class ActionAgent(BasicAgent):
     def consecutive_detect(self, detections):
         consecutive_detection = [a*b for (a, b) in zip(detections[:-1], detections[1:])]
         return consecutive_detection
-
 
     def detect_interference(self, debug=False):
         try:

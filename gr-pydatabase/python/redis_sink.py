@@ -277,7 +277,6 @@ class redis_sink(gr.sync_block):
         self.redis_db.set("SYSTEM:ACTION:HOP", payload)
         pass
 
-
     def action_to_ack(self):
         ACK_status = self.redis_db.get(self.MONITOR_ACK)
         self.msg_debug(f'[Redis_sink] ACK Status: {ACK_status.decode("utf-8")}')
@@ -308,14 +307,13 @@ class redis_sink(gr.sync_block):
         try:
             seq = json.loads(payload)['sequence']
             set_key = f'Recv:{seq}'
+            timestamp = str(time.time())
             self.msg_debug(f'[Redis_sink] keys: {set_key+":*"}, result: {self.redis_db.keys(set_key+":*")}')
             if self.redis_db.keys(set_key + ':*'):
                 # Already in db
                 self.msg_debug(f'[Redis_sink] key {set_key+":*"}, Already in db')
             else:
-                self.pipeline.hmset(f'Recv:{seq}:{str(time.time())}', {'payload': payload, 'info': info_json})
-
-            timestamp = str(time.time())
+                self.pipeline.hmset(f'Recv:{seq}:{timestamp}', {'payload': payload, 'info': info_json})
             self.pipeline.set(f'CSI:{timestamp}', csi_json)
             self.pipeline.set("SYSTEM:ACTION:CSI", f'CSI:{timestamp}')
         except Exception as exp:
