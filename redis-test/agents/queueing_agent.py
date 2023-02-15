@@ -12,6 +12,7 @@ from BasicAgent import BasicAgent
 class QueueAgent(BasicAgent):
     def __init__(self, subprefix, agentkey):
         super(QueueAgent, self).__init__("QueueAgent", subprefix, agentkey)
+        self.db.set(self.c["FAIL_ACK_NUM"], 0)
         print('Initialization done.')
 
     def agent_event_handler(self, msg):
@@ -53,6 +54,11 @@ class QueueAgent(BasicAgent):
                     if ack_for_key.decode("utf-8") == "Failed":
                         print("It is failed, pop it.")
                         self.db.rpop(db_key)
+                        self.db.incr(self.c["FAIL_ACK_NUM"])
+                        if self.db.get(self.c["FAIL_ACK_NUM"]).decode("utf-8") >= 20:
+                            time.sleep(0.2)
+                            self.db.set(self.c["FAIL_ACK_NUM"], 0)
+
                 
                 elif rf_device_state == self.c['KEYWORD_IDLE']:
                     # There are some keys in the queue and the RF is Idle.
@@ -69,7 +75,7 @@ class QueueAgent(BasicAgent):
                     p.reset()
                 elif self.db.get(self.c['SYSTEM_STATE']).decode('utf-8') == self.c['SYSTEM_TRANS_HOLD']:
                     print("[Queue] System Holding")
-                    time.sleep(0.01)
+                    time.sleep(0.4)
                 else:
                     print('[Queue] Still processing, sleep for 0.001 second.')
                     time.sleep(0.001)

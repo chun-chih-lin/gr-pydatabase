@@ -16,6 +16,7 @@
     "ACK_STATE_WAIT": "Waiting",
     "ACK_STATE_FAIL": "Failed",
     "ACK_STATE_SUCC": "Success",
+    "FAIL_ACK_NUM": "FAIL:ACK:NUM",
         
     "SYSTEM_STATE": "RFSYSTEM:STATE",
     "SYSTEM_FREE": "Free",
