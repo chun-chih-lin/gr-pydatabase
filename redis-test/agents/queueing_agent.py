@@ -82,7 +82,7 @@ class QueueAgent(BasicAgent):
                     time.sleep(0.4)
                 else:
                     print('[Queue] Still processing, sleep for 0.001 second.')
-                    time.sleep(0.001)
+                    time.sleep(0.0015)
                 print('Done processing all the msg in queue')
         except Exception as exp:
             _, _, e_tb = sys.exc_info()
