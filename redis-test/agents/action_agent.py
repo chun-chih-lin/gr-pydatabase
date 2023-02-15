@@ -239,7 +239,8 @@ class ActionAgent(BasicAgent):
     def choose_channel(self):
         current_freq = int(self.db.get(self.c['SYSTEM_FREQ']).decode("utf-8"))
         print(f"[Action] Channels: {self.c['DOT_11_CHANNELS'].copy()}")
-        option = self.c['DOT_11_CHANNELS'].copy().remove(current_freq)
+        option = [int(f) for f in self.c['DOT_11_CHANNELS']].remove(current_freq)
+        
         print(f"[Aciton] I'm using {current_freq}...")
         print(f"[Action] Choose hopt_to: {option}")
         return option
@@ -279,7 +280,13 @@ class ActionAgent(BasicAgent):
                 self.db.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_TRANS_HOLD"])
 
                 # Initiating the attempt, Stage 3.
-                hop_to = self.choose_channel()
+                current_freq = int(self.db.get(self.c['SYSTEM_FREQ']).decode("utf-8"))
+                print(f"[Action] Channels: {self.c['DOT_11_CHANNELS'].copy()}")
+                option = [int(f) for f in self.c['DOT_11_CHANNELS']].remove(current_freq)
+                
+                print(f"[Aciton] I'm using {current_freq}...")
+                print(f"[Action] Choose hopt_to: {option}")
+                # hop_to = self.choose_channel()
                 hop_to = 2442000000
                 
                 ctrl_msg = dict()
