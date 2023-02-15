@@ -281,6 +281,7 @@ class redis_sink(gr.sync_block):
             self.msg_debug('[Redis_sink] Receive ACK.')
             p = self.redis_db.pipeline()
             p.set(self.MONITOR_ACK, self.ACK_STATE_SUCC)
+            p.set("FAIL:ACK:NUM", 0)
             p.set(self.REDEVICE_STATE, self.KEYWORD_IDLE)
             p.rpop(self.QUEUE_NAME)
             p.execute()
