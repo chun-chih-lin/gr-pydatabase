@@ -250,8 +250,12 @@ class ActionAgent(BasicAgent):
             WARNING = '\033[93m'
             EOC = '\033[0m'
             csi_list = self.get_all_csi_in_db()
-            sliding_var_detect_csis = self.sliding_var_detect(csi_list)
-            detections = self.median_max_detect(sliding_var_detect_csis)
+            if not csi_list:
+                print("[Action] csi_list is empty.")
+                detections = []
+            else:
+                sliding_var_detect_csis = self.sliding_var_detect(csi_list)
+                detections = self.median_max_detect(sliding_var_detect_csis)
             print(f'[Action] detections: {detections}')
             consecutive_detection = self.consecutive_detect(detections)
             print(f'[Action] consecutive_detection: {consecutive_detection}')
