@@ -74,9 +74,9 @@ class ActionAgent(BasicAgent):
                 
                 print(f"Receive ACK?: {self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])}")
 
-                if self.db.get(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"]) is not None:
+                if self.db.get(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"]) is None:
+                    # None means the system is reset to init state which means it success.
                     print("Successfully received the NEW:FREQ:ACK. Everything is fine.")
-
                     self.release_system()
                     return
                 else:
@@ -117,12 +117,14 @@ class ActionAgent(BasicAgent):
         print(f"[Action] db.delete({self.c['SYSTEM_HOPPING']})")
         print(f"[Action] db.delete({self.c['HOPPING_CTRL_ACT_NEW_FREQ']})")
         print(f"[Action] db.delete({self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK']})")
+        print(f"[Action] db.delete({self.c['SYSTEM_ACTION_CHECK']}) The Check should not be triggered.")
         self.db.delete(self.c["SYSTEM_ACTION_CSI"])
         self.db.delete(self.c["SYSTEM_ACTION_HOP"])
         self.db.delete(self.c["SYSTEM_ACTION_DEBUG"])
         self.db.delete(self.c["SYSTEM_HOPPING"])
         self.db.delete(self.c["HOPPING_CTRL_ACT_NEW_FREQ"])
         self.db.delete(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"])
+        self.db.delete(self.c["SYSTEM_ACTION_CHECK"])
 
     #-------------------------------------------------------------------------------
     def action_to_hop(self):
@@ -292,6 +294,9 @@ class ActionAgent(BasicAgent):
 
                 print(f"[Action] Send out lots of notification packets, switch to new channel...")
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
+
+                self.db.set(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'], "Wait")
+
                 print(f"[Action] Expire check {self.c['HOPPING_CTRL_TIMEOUT']} s")
                 print(f"[Action] set {self.c['SYSTEM_ACTION_CHECK']} True ex={self.c['HOPPING_CTRL_TIMEOUT']}")
                 self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=int(self.c['HOPPING_CTRL_TIMEOUT']))
