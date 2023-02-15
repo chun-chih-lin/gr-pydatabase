@@ -329,9 +329,9 @@ class ActionAgent(BasicAgent):
                 print(f"Send out five packets, switch to new channel...")
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
 
-                print("Expire check 3 s")
-                print(f"set {self.c['SYSTEM_ACTION_CHECK']} True ex=3")
-                self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=3)
+                print(f"Expire check {self.c['HOPPING_CTRL_TIMEOUT']} s")
+                print(f"set {self.c['SYSTEM_ACTION_CHECK']} True ex={self.c['HOPPING_CTRL_TIMEOUT']}")
+                self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=int(self.c['HOPPING_CTRL_TIMEOUT']))
 
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()
