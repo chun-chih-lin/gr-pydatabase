@@ -34,7 +34,7 @@ class ActionAgent(BasicAgent):
             print(f'[Action] Event! {msg}')
             action = self.get_action(msg)
             print(f"[Action] action: {action}")
-            if action == self.c["SYSTEM_ACTION_TYPE_CSI"]:
+            if action == self.c["SYSTEM_ACTION_TYPE_CSI"] and msg["data"].decode("utf-8") != "del":
                 csi_key = self.db.get(self.c["SYSTEM_ACTION_CSI"]).decode("utf-8")
                 timestamp = csi_key.split(":")[1]
                 newest_key = self.db.lrange(self.c["SYSTEM_CSI_QUEUE"], 0, 0)
@@ -59,9 +59,9 @@ class ActionAgent(BasicAgent):
                     print(f'keys in queue: {newest_key}')
                     print(f'*** db.delete({csi_key})')
                     self.db.delete(csi_key)
-            elif action == self.c["SYSTEM_ACTION_TYPE_HOP"]:
+            elif action == self.c["SYSTEM_ACTION_TYPE_HOP"] and msg["data"].decode("utf-8") != "del":
                 self.action_to_hop()
-            elif action == self.c["SYSTEM_ACTION_TYPE_DEBUG"]:
+            elif action == self.c["SYSTEM_ACTION_TYPE_DEBUG"] and msg["data"].decode("utf-8") != "del":
                 self.detect_interference(debug=True)
             elif action == self.c["SYSTEM_ACTION_TYPE_CHECK"]:
                 print("Checking")
