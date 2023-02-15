@@ -14,6 +14,7 @@ from BasicAgent import BasicAgent
 class ActionAgent(BasicAgent):
     def __init__(self, subprefix, agentkey):
         super(ActionAgent, self).__init__("ActionAgent", subprefix, agentkey)
+        self.init_hop()
         print('ActionAgent Initialization done.')
 
     def agent_event_handler(self, msg):
@@ -105,9 +106,9 @@ class ActionAgent(BasicAgent):
         print(f"[Action] Release the system to Free and Idle.")
         self.db.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_FREE"])
         self.db.set(self.c['RFDEVICE_STATE'], self.c["KEYWORD_IDLE"])
-        self.reset_from_hop()
+        self.init_hop()
     
-    def reset_from_hop(self):
+    def init_hop(self):
         print(f"[Action] Reset db from hopping.")
         print("[Action] Should clean all the keys related to the hopping.")
         print(f"[Action] db.delete({self.c['SYSTEM_ACTION_CSI']})")
