@@ -238,6 +238,7 @@ class ActionAgent(BasicAgent):
 
     def choose_channel(self):
         current_freq = int(self.db.get(self.c['SYSTEM_FREQ']).decode("utf-8"))
+        print(f"[Action] Channels: {self.c['DOT_11_CHANNELS'].copy()}")
         option = self.c['DOT_11_CHANNELS'].copy().remove(current_freq)
         print(f"[Aciton] I'm using {current_freq}...")
         print(f"[Action] Choose hopt_to: {option}")
