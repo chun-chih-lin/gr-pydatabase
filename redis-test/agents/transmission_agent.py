@@ -98,11 +98,13 @@ class TransAgent(BasicAgent):
         
     def abort_monitor(self, db_key, key_ack):
         print(f'[Trans] ACK status: {self.db.get(self.c["MONITOR_ACK"]).decode("utf-8")}, Abort monitoring...')
+        fail_count = int(self.db.get(self.c['FAIL_ACK_NUM']).decode("utf-8"))
         p = self.db.pipeline()
         p.set("RECEPTION", db_key)
         p.set(key_ack, "Failed")
         p.set(self.c['RFDEVICE_STATE'], self.c['KEYWORD_IDLE'])
         p.set(self.c['MONITOR_ACK'], self.c['ACK_STATE_FAIL'])
+        p.set(self.c['FAIL_ACK_NUM'], fail_count+1)
         p.rpop('QUEUE:LIST:TRANS')
         p.execute()
         pass

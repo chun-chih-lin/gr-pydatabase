@@ -50,12 +50,16 @@ class QueueAgent(BasicAgent):
                 print(f"[Queue] Processing for key: {oldest_key}")
                 ack_for_key = self.db.get(f"{oldest_key}:ACK")
                 print(f"[Queue] ACK for the key: {ack_for_key}")
+                fail_count = int(self.db.get(self.c['FAIL_ACK_NUM']).decode("utf-8"))
+                print(f"[Queue] Consecutive failed: {fail_count}")
                 if ack_for_key is not None:
+                    print(f"[Queue] ack_for_key is not None")
+                    print(f"[Queue] fail count: {fail_count}")
                     if ack_for_key.decode("utf-8") == "Failed":
                         print("It is failed, pop it.")
                         self.db.rpop(db_key)
-                        self.db.incr(self.c["FAIL_ACK_NUM"])
-                        if self.db.get(self.c["FAIL_ACK_NUM"]).decode("utf-8") >= 10:
+                        self.db.set(self.c["FAIL_ACK_NUM"], fail_count+1)
+                        if fail_count >= 10:
                             self.db.set(self.c["SYSTEM_ACTION_DEBUG"], "True")
                             self.db.set(self.c["FAIL_ACK_NUM"], 0)
                             time.sleep(0.2)
