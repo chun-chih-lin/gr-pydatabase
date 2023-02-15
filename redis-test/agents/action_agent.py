@@ -31,7 +31,7 @@ class ActionAgent(BasicAgent):
 
     def event_handler(self, msg):
         try:
-            print(f'[Action] Event! {msg}')
+            # print(f'[Action] Event! {msg}')
             action = self.get_action(msg)
             print(f"[Action] action: {action}")
             if action == self.c["SYSTEM_ACTION_TYPE_CSI"] and msg["data"].decode("utf-8") != "del":
@@ -236,6 +236,13 @@ class ActionAgent(BasicAgent):
         consecutive_detection = [a*b for (a, b) in zip(detections[:-1], detections[1:])]
         return consecutive_detection
 
+    def choose_channel(self):
+        current_freq = int(self.db.get(self.c['SYSTEM_FREQ']).decode("utf-8"))
+        option = self.c['DOT_11_CHANNELS'].copy().remove(current_freq)
+        print(f"[Aciton] I'm using {current_freq}...")
+        print(f"[Action] Choose hopt_to: {option}")
+        return option
+
     def detect_interference(self, debug=False):
         try:
             print('[Action] Detecting interference...')
@@ -271,7 +278,9 @@ class ActionAgent(BasicAgent):
                 self.db.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_TRANS_HOLD"])
 
                 # Initiating the attempt, Stage 3.
-                hop_to = "2442000000"
+                hop_to = self.choose_channel()
+                hop_to = 2442000000
+                
                 ctrl_msg = dict()
                 ctrl_msg["ControlType"] = "HOP"
                 ctrl_msg["ControlAction"] = hop_to

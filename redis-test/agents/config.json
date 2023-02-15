@@ -42,6 +42,11 @@
     "HOPPING_CTRL_TIMEOUT": 10,
     "HOPPING_CTRL_ACT_NOTIFY_NUM": 20,
 
+    "DOT_11_CHANNELS": [
+        2442000000,
+        2742000000
+    ],
+
     "SYSTEM_FREQ": "SYSTEM:FREQ",
     "TUNE_RF": "TuneRF:11"
 }
