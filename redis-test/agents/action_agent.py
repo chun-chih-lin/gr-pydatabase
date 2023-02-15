@@ -188,7 +188,7 @@ class ActionAgent(BasicAgent):
                 return
         except Exception as e:
             _, _, e_tb = sys.exc_info()
-            print(f'[ActionAgent] {exp}, Line {e_tb.tb_lineno}')
+            print(f'[ActionAgent] {e}, Line {e_tb.tb_lineno}')
         pass
 
     #--------------------------------------------------------------------------------
