@@ -250,7 +250,6 @@ class ActionAgent(BasicAgent):
             WARNING = '\033[93m'
             EOC = '\033[0m'
             csi_list = self.get_all_csi_in_db()
-            print(f"[Action] csi_list: {csi_list}")
             if len(csi_list) == 0:
                 print("[Action] csi_list is empty.")
                 detections = []
