@@ -88,7 +88,7 @@ class redis_source(gr.sync_block):
             # print(f'[Source] {db_key}')
             if db_key:
                 self.msg = self.redis_db.get(db_key).decode("utf-8")
-                #print(f"[Source] self.msg {self.msg}, {type(self.msg)}")
+                self.log(f"[Source] self.msg {self.msg}, {type(self.msg)}")
                 self.message_port_pub(pmt.string_to_symbol("pdu"), pmt.intern(self.msg))
                 # print(f"Send out the pdu, {time.time()}")
         except Exception as exp:
