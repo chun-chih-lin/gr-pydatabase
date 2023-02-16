@@ -132,12 +132,17 @@ class ActionAgent(BasicAgent):
         print(f"[Action] set {self.c['SYSTEM_ACTION_CHECK']} True ex={timeout}")
         self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=timeout)
 
+    def is_checking(self):
+        return self.db.get(self.c["SYSTEM_ACTION_CHECK"]) is not None
+
     #-------------------------------------------------------------------------------
     def action_to_hop(self):
         try:
             payload = self.db.get("SYSTEM:ACTION:HOP").decode("utf-8")
             payload = json.loads(payload)
             if type(payload["ControlAction"]) == int or float:
+                if self.is_checking():
+                    return
                 """ This is on the Follower side
                 payload:
                     ControlType: "HOP"
