@@ -140,7 +140,7 @@ class ActionAgent(BasicAgent):
         try:
             payload = self.db.get("SYSTEM:ACTION:HOP").decode("utf-8")
             payload = json.loads(payload)
-            if type(payload["ControlAction"]) == int or float:
+            if isinstance(payload["ControlAction"], (int, float)):
                 if self.is_checking():
                     return
                 """ This is on the Follower side
