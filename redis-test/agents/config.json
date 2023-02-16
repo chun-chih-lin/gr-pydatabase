@@ -44,7 +44,7 @@
 
     "DOT_11_CHANNELS": [
         2442000000,
-        2742000000
+        2472000000
     ],
 
     "SYSTEM_FREQ": "SYSTEM:FREQ",
