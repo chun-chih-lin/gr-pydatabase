@@ -243,7 +243,7 @@ class ActionAgent(BasicAgent):
             # TODO: Setting should be set in db for dynamic changes
             self.sliding_window_size = 4
             self.median_threshold = 5.0
-            self.consecutive_threshold = 2
+            self.consecutive_threshold = 3
 
             FAILRED = '\033[91m'
             OKGREEN = '\033[92m'
