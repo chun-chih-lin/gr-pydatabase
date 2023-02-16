@@ -156,6 +156,7 @@ class ActionAgent(BasicAgent):
                 pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
                 print(f"[Action] Hop to new frequency {hop_to}")
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
+                print(f"[Action] hmset {self.c['SYSTEM_HOPPING']} Freq {hop_to} PreFreq {pre_freq}")
                 self.db.hmset(self.c["SYSTEM_HOPPING"], {"Freq": hop_to, "PreFreq": pre_freq})
                 print(f"[Action] sleep for 2.0 second")
                 time.sleep(2.0)
