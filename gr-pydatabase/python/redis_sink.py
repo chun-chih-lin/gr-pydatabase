@@ -226,7 +226,7 @@ class redis_sink(gr.sync_block):
                             # It is a control data frame.
                             if payload_dict['ControlType'] == "HOP":
                                 self.msg_debug("Hold the system until hopping is completed")
-                                if payload_dict["ControlAction"].isdigit():
+                                if type(payload_dict["ControlAction"]) == int or float:
                                     self.redis_db.set("RFSYSTEM:STATE", "Hold")
                                     self.redis_db.hset("SYSTEM:HOPPING", "Stage", 4)
                                 self.action_to_hop(payload)
