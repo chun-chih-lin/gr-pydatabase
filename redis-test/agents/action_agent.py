@@ -276,6 +276,7 @@ class ActionAgent(BasicAgent):
                 print(f"[Aciton] I'm using {current_freq} {type(current_freq)}...")
                 options = [int(f) for f in self.c['DOT_11_CHANNELS']]
                 print(f"[Action] Choose hopt_to: {options} {type(options[0])} {type(options[1])}")
+                print(f"[Action] remove the using one: {options.remove(current_freq)}")
                 option = options.remove(current_freq)[0]
                 hop_to = option
                 print(f"[Action] hop_to: {hop_to}")
