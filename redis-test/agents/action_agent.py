@@ -155,9 +155,9 @@ class ActionAgent(BasicAgent):
                 time.sleep(0.2)
 
                 payload["ControlAction"] = "HOP:ACK"
-                del payload["Role"]
-                del payload["Timestamp"]
-                del payload["Idx"]
+                # del payload["Role"]
+                # del payload["Timestamp"]
+                # del payload["Idx"]
                 print(f"[Action] Sendint out {self.c['HOPPING_CTRL_ACT_NOTIFY_NUM']} ACK on new channel.")
                 for i in range(self.c["HOPPING_CTRL_ACT_NOTIFY_NUM"]):
                     new_freq_ack_in_db = self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])
