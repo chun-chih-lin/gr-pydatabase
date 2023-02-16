@@ -88,7 +88,7 @@ class TransAgent(BasicAgent):
                 print(f'[Trans] Timeout. Retry [{retry_count+1}/{self.c["RETRY_MAX"]}]')
                 retry_count += 1
                 waiting_time = 0.0
-                tiem.sleep(0.01)
+                time.sleep(0.01)
                 p = self.db.pipeline()
                 p.delete(f'Trans:{db_key}')
                 p.set(f'Trans:{db_key}', PMDU_msg)
