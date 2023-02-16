@@ -139,7 +139,7 @@ class ActionAgent(BasicAgent):
     def action_to_hop(self):
         try:
             payload = self.db.get("SYSTEM:ACTION:HOP")
-            if payload is not None:
+            if payload is None:
                 print(f'[Action] payload is None. {payload}')
                 return
 
