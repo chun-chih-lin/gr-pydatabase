@@ -127,6 +127,13 @@ class ActionAgent(BasicAgent):
     def is_checking(self):
         return self.db.get(self.c["SYSTEM_ACTION_CHECK"]) is not None
 
+    def hop_successful(self):
+        new_freq = int(self.db.hget(self.c['SYSTEM_HOPPING'], 'Freq').decode('utf-8'))
+        print(f"[Action] Hopping successful. Update the system frequency to {new_freq}")
+        self.db.set(self.c['SYSTEM_FREQ'], new_freq)
+        self.db.delete(self.c['SYSTEM_HOPPING'])
+        pass
+
     #-------------------------------------------------------------------------------
     def action_to_hop(self):
         try:
@@ -187,6 +194,7 @@ class ActionAgent(BasicAgent):
                     time.sleep(0.05)
                 print(f"[Action] Send out all the ACK:ACK.")
                 self.release_system()
+                self.hop_successful()
                 
             elif payload["ControlAction"] == "HOP:ACK:ACK":
                 """ This is on the Follower side
@@ -197,6 +205,7 @@ class ActionAgent(BasicAgent):
                 self.db.set(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"], "True")
                 print(f"[Action] Receive HOP:ACK:ACK on new channel")
                 self.release_system()
+                self.hop_successful()
             else:
                 return
         except Exception as e:
