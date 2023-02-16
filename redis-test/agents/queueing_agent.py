@@ -54,9 +54,10 @@ class QueueAgent(BasicAgent):
                 print(f"[Queue] Consecutive failed: {fail_count}")
 
                 if fail_count >= 10:
-                    self.db.set(self.c["SYSTEM_ACTION_DEBUG"], "True")
+                    # self.db.set(self.c["SYSTEM_ACTION_DEBUG"], "True")
                     self.db.set(self.c["FAIL_ACK_NUM"], 0)
-                    time.sleep(0.5)
+                    # time.sleep(0.5)
+                    pass
                 elif ack_for_key is not None:
                     print(f"[Queue] ack_for_key is not None")
                     print(f"[Queue] fail count: {fail_count}")
