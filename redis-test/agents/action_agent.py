@@ -73,22 +73,15 @@ class ActionAgent(BasicAgent):
                     return
                 
                 print(f"Receive ACK?: {self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])}")
+                print("After 10 seconds and do not receive anything. Rollback to old freq")
+                print("Rolling back...")
+                old_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
+                print(f"\tFreq: {old_freq}")
+                print(f"\thmset {self.c['TUNE_RF']} {{Freq: {old_freq}}}")
+                self.db.hset(self.c['TUNE_RF'], "Freq", old_freq)
 
-                if self.db.get(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"]) is None:
-                    # None means the system is reset to init state which means it success.
-                    print("Successfully received the NEW:FREQ:ACK. Everything is fine.")
-                    self.release_system()
-                    return
-                else:
-                    print("After 10 seconds and do not receive anything. Rollback to old freq")
-                    print("Rolling back...")
-                    old_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
-                    print(f"\tFreq: {old_freq}")
-                    print(f"\thmset {self.c['TUNE_RF']} {{Freq: {old_freq}}}")
-                    self.db.hset(self.c['TUNE_RF'], "Freq", old_freq)
-
-                    self.release_system()
-                    return
+                self.release_system()
+                return
             else:
                 print(f"Other action: {action}.")
                         
@@ -184,11 +177,6 @@ class ActionAgent(BasicAgent):
                 payload["ControlAction"] = "HOP:ACK:ACK"
                 time.sleep(0.2)
                 for i in range(self.c["HOPPING_CTRL_ACT_NOTIFY_NUM"]):
-                    # new_freq_ack_in_db = self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])
-                    # print(f"[Action] Sending #{i} ACK \"HOP:ACK:ACK\" for action noitify. {new_freq_ack_in_db}")
-                    # if new_freq_ack_in_db is not None:
-                    #     print("[Action] receive \"NEW:FREQ:ACK\". Stop sending out HOP:ACK:ACK")
-                    #     break
                     self.db.set(self.c["TRANS_FREQ_HOP"], json.dumps(payload))
                     time.sleep(0.05)
                 print(f"[Action] Send out all the ACK:ACK.")
