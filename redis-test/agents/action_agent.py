@@ -132,7 +132,7 @@ class ActionAgent(BasicAgent):
         try:
             payload = self.db.get("SYSTEM:ACTION:HOP").decode("utf-8")
             payload = json.loads(payload)
-            if payload["ControlAction"].isdigit():
+            if type(payload["ControlAction"]) == int or float:
                 """ This is on the Follower side
                 payload:
                     ControlType: "HOP"
