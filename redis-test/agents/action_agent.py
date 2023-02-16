@@ -138,8 +138,11 @@ class ActionAgent(BasicAgent):
     #-------------------------------------------------------------------------------
     def action_to_hop(self):
         try:
-            payload = self.db.get("SYSTEM:ACTION:HOP").decode("utf-8")
-            payload = json.loads(payload)
+            payload = self.db.get("SYSTEM:ACTION:HOP")
+            if payload not None:
+                return
+
+            payload = json.loads(payload.decode("utf-8"))
             if isinstance(payload["ControlAction"], (int, float)):
                 if self.is_checking():
                     return
