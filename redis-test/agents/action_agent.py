@@ -287,7 +287,7 @@ class ActionAgent(BasicAgent):
                 print(f"[Action] Choose hopt_to: {options} {type(options[0])} {type(options[1])}")
                 option = options.remove(current_freq)
                 # hop_to = self.choose_channel()
-                hop_to = 2442000000
+                hop_to = option
                 
                 ctrl_msg = dict()
                 ctrl_msg["ControlType"] = "HOP"
