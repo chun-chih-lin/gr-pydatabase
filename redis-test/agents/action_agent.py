@@ -132,7 +132,6 @@ class ActionAgent(BasicAgent):
 
     #-------------------------------------------------------------------------------
     def action_to_hop(self):
-
         try:
             payload = self.db.get("SYSTEM:ACTION:HOP").decode("utf-8")
             payload = json.loads(payload)

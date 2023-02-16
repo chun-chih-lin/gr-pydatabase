@@ -244,6 +244,8 @@ class redis_sink(gr.sync_block):
                         csi_dict['imag'] = imag_csi
                         csi_json = json.dumps(csi_dict)
 
+                        timestamp = str(time.time())
+
                         if header_info['type'] == self.FRMAE_DATA:
                             info_json = json.dumps(meta)
                             csi_json = json.dumps(csi_dict)
@@ -252,12 +254,12 @@ class redis_sink(gr.sync_block):
                             # Only write the data to db if it is a DATA frame
                             self.msg_debug(f'Receive a DATA frame')
                             self.reply_with_ack(header_info['addr2'])
-                            self.set_to_db(payload, info_json, csi_json)
+                            self.set_to_db(payload, info_json, timestamp, csi_json)
                         else:
                             # Someone just replied a ACK to me
                             if header_info['type'] == self.FRMAE_CTRL and header_info['subtype'] == 13:
                                 print("[Sink] Receiving ACK")
-                                self.action_to_ack()
+                                self.action_to_ack(timestamp, csi_json)
                     else:
                         # The destination is not me. Discard the received pkt.
                         # self.msg_debug('header_info:\n', header_info)
@@ -287,6 +289,7 @@ class redis_sink(gr.sync_block):
             p.rpop(self.QUEUE_NAME)
             p.execute()
             p.reset()
+            self.store_CSI(timestamp, csi_json)
             self.msg_debug('[Redis_sink] RPOP. Can start the next msg...')
         else:
             self.msg_debug('[Redis_sink] Receive redundent ACK...')
@@ -301,20 +304,24 @@ class redis_sink(gr.sync_block):
         self.sock.sendto(bytes(ack_frame), ("127.0.0.1", 52001))
         pass
 
-    def set_to_db(self, payload, info_json, csi_json):
+    def store_CSI(self, timestamp, csi_json):
+        self.pipeline.set(f'CSI:{timestamp}', csi_json)
+        self.pipeline.set("SYSTEM:ACTION:CSI", f'CSI:{timestamp}')
+
+    def set_to_db(self, payload, info_json, timestamp, csi_json):
         # self.msg_debug("[gr-pydatabase] Parsing the payload and set the information to db...")
         try:
             seq = json.loads(payload)['sequence']
             set_key = f'Recv:{seq}'
-            timestamp = str(time.time())
             self.msg_debug(f'[Redis_sink] keys: {set_key+":*"}, result: {self.redis_db.keys(set_key+":*")}')
             if self.redis_db.keys(set_key + ':*'):
                 # Already in db
                 self.msg_debug(f'[Redis_sink] key {set_key+":*"}, Already in db')
             else:
                 self.pipeline.hmset(f'Recv:{seq}:{timestamp}', {'payload': payload, 'info': info_json})
-            self.pipeline.set(f'CSI:{timestamp}', csi_json)
-            self.pipeline.set("SYSTEM:ACTION:CSI", f'CSI:{timestamp}')
+            # self.pipeline.set(f'CSI:{timestamp}', csi_json)
+            # self.pipeline.set("SYSTEM:ACTION:CSI", f'CSI:{timestamp}')
+            self.store_CSI(timestamp, csi_json)
         except Exception as exp:
             self.msg_debug(f'[Redis_sink] Exception: set_to_db {exp}')
             self.msg_debug(f'[Redis_sink] Exception: payload:\n', payload, '\ninfo:\n', info_json)
