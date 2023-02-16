@@ -40,7 +40,7 @@ class ActionAgent(BasicAgent):
                 newest_key = self.db.lrange(self.c["SYSTEM_CSI_QUEUE"], 0, 0)
                 newest_key = [k.decode("utf-8") for k in newest_key]
                 if csi_key in newest_key:
-                    print('key is already in the queue. Skip it.')
+                    # print('key is already in the queue. Skip it.')
                     pass
                 elif len(newest_key) < 1:
                     self.db.lpush(self.c["SYSTEM_CSI_QUEUE"], csi_key)
@@ -48,16 +48,16 @@ class ActionAgent(BasicAgent):
                     self.db.lpush(self.c["SYSTEM_CSI_QUEUE"], csi_key)
                     if len(self.db.lrange(self.c["SYSTEM_CSI_QUEUE"], 0, -1)) > self.c["MAX_CSI_RECORD"]:
                         oldest_csi_key = self.db.rpop(self.c["SYSTEM_CSI_QUEUE"])
-                        print(f'Adding new key: {csi_key}. Delete oldest key: {oldest_csi_key}')
-                        print(f'*** db.delete({oldest_csi_key})')
+                        # print(f'Adding new key: {csi_key}. Delete oldest key: {oldest_csi_key}')
+                        # print(f'*** db.delete({oldest_csi_key})')
                         self.db.delete(oldest_csi_key)
                         # We have enough CSI in the Queue, try to detect the interference.
                         self.detect_interference()
                 else:
                     # The key is older somehow. Discard it.
-                    print(f'incoming key: {csi_key} is older somehow, discard it.')
-                    print(f'keys in queue: {newest_key}')
-                    print(f'*** db.delete({csi_key})')
+                    # print(f'incoming key: {csi_key} is older somehow, discard it.')
+                    # print(f'keys in queue: {newest_key}')
+                    # print(f'*** db.delete({csi_key})')
                     self.db.delete(csi_key)
             elif action == self.c["SYSTEM_ACTION_TYPE_HOP"] and msg["data"].decode("utf-8") != "del":
                 self.action_to_hop()
@@ -304,7 +304,7 @@ class ActionAgent(BasicAgent):
                     if try_c == 0:
                         self.db.hset(self.c["SYSTEM_HOPPING"], "Timestamp", timestamp)
                     self.db.set(self.c["TRANS_FREQ_HOP"], json_info)
-                    time.sleep(0.01)
+                    time.sleep(0.1)
 
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
                 self.db.set(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'], "Wait")
