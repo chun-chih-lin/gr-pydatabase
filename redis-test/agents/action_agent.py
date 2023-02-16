@@ -236,15 +236,6 @@ class ActionAgent(BasicAgent):
         consecutive_detection = [a*b for (a, b) in zip(detections[:-1], detections[1:])]
         return consecutive_detection
 
-    def choose_channel(self):
-        current_freq = int(self.db.get(self.c['SYSTEM_FREQ']).decode("utf-8"))
-        print(f"[Action] Channels: {self.c['DOT_11_CHANNELS'].copy()}")
-        option = [int(f) for f in self.c['DOT_11_CHANNELS']].remove(current_freq)
-        
-        print(f"[Aciton] I'm using {current_freq}...")
-        print(f"[Action] Choose hopt_to: {option}")
-        return option
-
     def detect_interference(self, debug=False):
         try:
             print('[Action] Detecting interference...')
@@ -285,9 +276,9 @@ class ActionAgent(BasicAgent):
                 print(f"[Aciton] I'm using {current_freq} {type(current_freq)}...")
                 options = [int(f) for f in self.c['DOT_11_CHANNELS']]
                 print(f"[Action] Choose hopt_to: {options} {type(options[0])} {type(options[1])}")
-                option = options.remove(current_freq)
-                # hop_to = self.choose_channel()
+                option = options.remove(current_freq)[0]
                 hop_to = option
+                print(f"[Action] hop_to: {hop_to}")
                 
                 ctrl_msg = dict()
                 ctrl_msg["ControlType"] = "HOP"
