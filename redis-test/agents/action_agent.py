@@ -139,7 +139,7 @@ class ActionAgent(BasicAgent):
     def action_to_hop(self):
         try:
             payload = self.db.get("SYSTEM:ACTION:HOP")
-            if payload not None:
+            if payload is not None:
                 return
 
             payload = json.loads(payload.decode("utf-8"))
