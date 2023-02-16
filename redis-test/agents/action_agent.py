@@ -103,21 +103,13 @@ class ActionAgent(BasicAgent):
         return self.utf8_decode(msg['channel']).split(":")[3]
 
     def release_system(self):
-        print(f"[Action] Release the system to Free and Idle.")
         self.db.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_FREE"])
         self.db.set(self.c['RFDEVICE_STATE'], self.c["KEYWORD_IDLE"])
         self.init_hop()
     
     def init_hop(self):
-        print(f"[Action] Reset db from hopping.")
-        print("[Action] Should clean all the keys related to the hopping.")
-        print(f"[Action] db.delete({self.c['SYSTEM_ACTION_CSI']})")
-        print(f"[Action] db.delete({self.c['SYSTEM_ACTION_HOP']})")
-        print(f"[Action] db.delete({self.c['SYSTEM_ACTION_DEBUG']})")
-        print(f"[Action] db.delete({self.c['SYSTEM_HOPPING']})")
-        print(f"[Action] db.delete({self.c['HOPPING_CTRL_ACT_NEW_FREQ']})")
-        print(f"[Action] db.delete({self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK']})")
-        print(f"[Action] db.delete({self.c['SYSTEM_ACTION_CHECK']}) The Check should not be triggered.")
+        # print(f"[Action] Reset db from hopping.")
+        # print("[Action] Should clean all the keys related to the hopping.")
         self.db.delete(self.c["SYSTEM_ACTION_CSI"])
         self.db.delete(self.c["SYSTEM_ACTION_HOP"])
         self.db.delete(self.c["SYSTEM_ACTION_DEBUG"])
@@ -155,7 +147,7 @@ class ActionAgent(BasicAgent):
                     Timestamp: timestamp
                     Idx: try_c
                 """
-                print("[Action] Receiving hopping notification")
+                print("[Action] I received hopping request. Trying to reply something back.")
                 # Detecting hopping. Jump to new frequency band and starting transmitting ACK back.
                 hop_to = payload["ControlAction"]
                 print(f"[Action] Hop to new frequency {hop_to}")
@@ -164,19 +156,16 @@ class ActionAgent(BasicAgent):
                 time.sleep(0.2)
 
                 payload["ControlAction"] = "HOP:ACK"
-                # del payload["Role"]
-                # del payload["Timestamp"]
-                # del payload["Idx"]
-                print(f"[Action] Sendint out {self.c['HOPPING_CTRL_ACT_NOTIFY_NUM']} ACK on new channel.")
+                print(f"[Action] Sendint out {self.c['HOPPING_CTRL_ACT_NOTIFY_NUM']} ACK on new channel. Expecting to receive \"HOP:ACK:ACK\" as response.")
                 for i in range(self.c["HOPPING_CTRL_ACT_NOTIFY_NUM"]):
                     new_freq_ack_in_db = self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])
-                    print(f"[Action] Sending #{i} action noitify. {new_freq_ack_in_db}")
+                    print(f"[Action] Sending #{i} action noitify ACK \"HOP:ACK\". {new_freq_ack_in_db}")
                     if new_freq_ack_in_db is not None:
                         print("[Action] receive NEW:FREQ:ACK. Stop sending out HOP:ACK")
                         break
                     self.db.set(self.c["TRANS_FREQ_HOP"], json.dumps(payload))
-                    time.sleep(0.01)
-                print(f"[Action] Send out all the ACK.")
+                    time.sleep(0.05)
+                print(f"[Action] Send out all the ACK. Waiting for replay. Expecting to receive \"HOP:ACK:ACK\" as response.")
                 self.plan_to_check(timeout=15)
             elif payload["ControlAction"] == "HOP:ACK":
                 """ This is on the Initiator side
@@ -184,18 +173,18 @@ class ActionAgent(BasicAgent):
                     ControlType: "HOP"
                     ControlAction: "HOP:ACK"
                 """
-                print(f"[Action] Receive HOP:ACK on new channel. Reply ACK:ACK")
+                print(f"[Action] Receive \"HOP:ACK\" on new channel. Reply \"HOP:ACK:ACK\"")
                 self.db.set(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"], "True")
                 payload["ControlAction"] = "HOP:ACK:ACK"
                 time.sleep(0.2)
                 for i in range(self.c["HOPPING_CTRL_ACT_NOTIFY_NUM"]):
-                    new_freq_ack_in_db = self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])
-                    print(f"[Action] Sending #{i} ACK for action noitify. {new_freq_ack_in_db}")
-                    if new_freq_ack_in_db is not None:
-                        print("[Action] receive NEW:FREQ:ACK. Stop sending out HOP:ACK")
-                        break
+                    # new_freq_ack_in_db = self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])
+                    # print(f"[Action] Sending #{i} ACK \"HOP:ACK:ACK\" for action noitify. {new_freq_ack_in_db}")
+                    # if new_freq_ack_in_db is not None:
+                    #     print("[Action] receive \"NEW:FREQ:ACK\". Stop sending out HOP:ACK:ACK")
+                    #     break
                     self.db.set(self.c["TRANS_FREQ_HOP"], json.dumps(payload))
-                    time.sleep(0.01)
+                    time.sleep(0.05)
                 print(f"[Action] Send out all the ACK:ACK.")
                 self.release_system()
                 
@@ -238,13 +227,11 @@ class ActionAgent(BasicAgent):
             ret = []
             for i, s in enumerate(csi[:len(csi)-self.sliding_window_size]):
                 ret.append(np.mean(np.var(csi[i:i+self.sliding_window_size])))
-
             sliding_detect_csis[csi_i, :] = ret
         return sliding_detect_csis
         
     def median_max_detect(self, sliding_var_ary):
         median_max_detection = []
-
         for d_i, d in enumerate(sliding_var_ary):
             median = np.median(d)
             max_v = np.max(d)
@@ -275,7 +262,6 @@ class ActionAgent(BasicAgent):
             EOC = '\033[0m'
             csi_list = self.get_all_csi_in_db()
             if len(csi_list) == 0:
-                print("[Action] csi_list is empty.")
                 detections = []
             else:
                 sliding_var_detect_csis = self.sliding_var_detect(csi_list)
@@ -288,10 +274,10 @@ class ActionAgent(BasicAgent):
             if sum(consecutive_detection) >= self.consecutive_threshold or debug:
                 # On Detected, Stage 1.
                 print(f'Too many detected! ({sum(consecutive_detection)}/{len(consecutive_detection)}) Interference detected!')
-                print('Hold the system and try to initiate to jump to another frequency with the receiver.')
-                print('Hold the transmission process')
+                # print('Hold the system and try to initiate to jump to another frequency with the receiver.')
+                # print('Hold the transmission process')
                 # Hold the system, Stage 2.
-                self.db.hset(self.c["SYSTEM_HOPPING"], "Stage", 2)
+                # self.db.hset(self.c["SYSTEM_HOPPING"], "Stage", 2)
                 self.db.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_TRANS_HOLD"])
 
                 # Initiating the attempt, Stage 3.
@@ -299,7 +285,6 @@ class ActionAgent(BasicAgent):
                 print(f"[Action] Channels: {self.c['DOT_11_CHANNELS'].copy()}")
                 print(f"[Aciton] I'm using {current_freq} {type(current_freq)}...")
                 options = [int(f) for f in self.c['DOT_11_CHANNELS'] if int(f) != current_freq]
-                print(f"[Action] Choose hopt_to: {options[0]}")
                 hop_to = options[0]
                 print(f"[Action] hop_to: {hop_to}")
                 
@@ -311,7 +296,6 @@ class ActionAgent(BasicAgent):
                 pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
 
                 for try_c in range(self.c["HOPPING_CTRL_ACT_NOTIFY_NUM"]):
-                    # Try a lot of time
                     timestamp = time.time()
                     ctrl_msg["Timestamp"] = timestamp
                     ctrl_msg["Idx"] = try_c
@@ -320,20 +304,12 @@ class ActionAgent(BasicAgent):
                     if try_c == 0:
                         self.db.hset(self.c["SYSTEM_HOPPING"], "Timestamp", timestamp)
                     self.db.set(self.c["TRANS_FREQ_HOP"], json_info)
-                    print(f"hset SYSTEM:HOPPING  Role Initiator")
-                    print(f"hset SYSTEM:HOPPING  Stage 3")
-                    print(f"hset SYSTEM:HOPPING  Freq {hop_to}")
-                    print(f"hset SYSTEM:HOPPING  PreFreq {pre_freq}")
-                    print(f"set {self.c['TRANS_FREQ_HOP']} {json_info}")
                     time.sleep(0.01)
 
-                print(f"[Action] Send out lots of notification packets, switch to new channel...")
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
-
                 self.db.set(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'], "Wait")
-
-                print(f"[Action] Expire check {self.c['HOPPING_CTRL_TIMEOUT']} s")
-                self.plan_to_check()
+                print(f"[Action] I initiate the frequency hopping. Wait for 30 seconds and see if anyone get some response.")
+                self.plan_to_check(timeout=30)
 
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()

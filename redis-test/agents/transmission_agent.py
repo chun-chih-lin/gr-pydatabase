@@ -73,7 +73,7 @@ class TransAgent(BasicAgent):
         while retry_count < self.c['RETRY_MAX']:
             print(f"[Trans] Monitor ACK: {self.db.get(self.c['MONITOR_ACK'])}")
             if self.db.get(self.c['SYSTEM_STATE']).decode('utf-8') == self.c['SYSTEM_TRANS_HOLD']:
-                print('System holds')
+                # print('System holds')
                 return
             elif self.db.get(self.c['MONITOR_ACK']).decode("utf-8") != self.c['ACK_STATE_WAIT']:
                 print(f'[Trans] {self.db.get(self.c["MONITOR_ACK"]).decode("utf-8")}')
@@ -101,7 +101,6 @@ class TransAgent(BasicAgent):
     def abort_monitor(self, db_key, key_ack):
         print(f'[Trans] ACK status: {self.db.get(self.c["MONITOR_ACK"]).decode("utf-8")}, Abort monitoring...')
         fail_count = int(self.db.get(self.c['FAIL_ACK_NUM']).decode("utf-8"))
-        print(f"[Trans] Increase the Fail count by 1: {fail_count+1}")
         p = self.db.pipeline()
         p.set("RECEPTION", db_key)
         p.set(key_ack, "Failed")

@@ -43,15 +43,15 @@ class QueueAgent(BasicAgent):
         try:
             while self.db.exists(db_key):
                 # While "QUEUE:LIST:TRANS" exist, means there is message needs to be transmitted
-                print(f"[Queue] {self.db.get(self.c['RFDEVICE_STATE'])}")
+                # print(f"[Queue] {self.db.get(self.c['RFDEVICE_STATE'])}")
                 rf_device_state = self.utf8_decode(self.db.get(self.c['RFDEVICE_STATE']))
-                print(f"[Queue] RF state: {rf_device_state}")
+                # print(f"[Queue] RF state: {rf_device_state}")
                 oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
-                print(f"[Queue] Processing for key: {oldest_key}")
+                # print(f"[Queue] Processing for key: {oldest_key}")
                 ack_for_key = self.db.get(f"{oldest_key}:ACK")
-                print(f"[Queue] ACK for the key: {ack_for_key}")
+                # print(f"[Queue] ACK for the key: {ack_for_key}")
                 fail_count = int(self.db.get(self.c['FAIL_ACK_NUM']).decode("utf-8"))
-                print(f"[Queue] Consecutive failed: {fail_count}")
+                # print(f"[Queue] Consecutive failed: {fail_count}")
 
                 if fail_count >= 10:
                     # self.db.set(self.c["SYSTEM_ACTION_DEBUG"], "True")
@@ -59,10 +59,8 @@ class QueueAgent(BasicAgent):
                     # time.sleep(0.5)
                     pass
                 elif ack_for_key is not None:
-                    print(f"[Queue] ack_for_key is not None")
                     print(f"[Queue] fail count: {fail_count}")
                     if ack_for_key.decode("utf-8") == "Failed":
-                        print("It is failed, pop it.")
                         self.db.rpop(db_key)
                 elif rf_device_state == self.c['KEYWORD_IDLE']:
                     # There are some keys in the queue and the RF is Idle.
@@ -75,15 +73,14 @@ class QueueAgent(BasicAgent):
                     p.reset()
                 elif self.db.get(self.c['SYSTEM_STATE']).decode('utf-8') == self.c['SYSTEM_TRANS_HOLD']:
                     print("[Queue] System Holding")
-                    time.sleep(0.4)
+                    time.sleep(10.0)
                 else:
-                    print('[Queue] Still processing, sleep for 0.001 second.')
+                    print('[Queue] Still processing, sleep for 0.01 second.')
                     time.sleep(0.01)
-                print('Done processing all the msg in queue')
+            print('Done processing all the msg in queue')
         except Exception as exp:
             _, _, e_tb = sys.exc_info()
             print(f'[Queue] Exception occurs: {exp}, Line {e_tb.tb_lineno}')
-
 
 def main():
     QueueAgent('QUEUE:LIST:TRANS', 'AGENT:QUEUE')
