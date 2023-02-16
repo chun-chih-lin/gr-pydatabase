@@ -113,7 +113,6 @@ class ActionAgent(BasicAgent):
         self.db.delete(self.c["SYSTEM_ACTION_CSI"])
         self.db.delete(self.c["SYSTEM_ACTION_HOP"])
         self.db.delete(self.c["SYSTEM_ACTION_DEBUG"])
-        self.db.delete(self.c["SYSTEM_HOPPING"])
         self.db.delete(self.c["HOPPING_CTRL_ACT_NEW_FREQ"])
         self.db.delete(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"])
         self.db.delete(self.c["SYSTEM_ACTION_CHECK"])
@@ -131,7 +130,7 @@ class ActionAgent(BasicAgent):
         new_freq = int(self.db.hget(self.c['SYSTEM_HOPPING'], 'Freq').decode('utf-8'))
         print(f"[Action] Hopping successful. Update the system frequency to {new_freq}")
         self.db.set(self.c['SYSTEM_FREQ'], new_freq)
-        self.db.delete(self.c['SYSTEM_HOPPING'])
+        self.db.delete(self.c["SYSTEM_HOPPING"])
         pass
 
     #-------------------------------------------------------------------------------
