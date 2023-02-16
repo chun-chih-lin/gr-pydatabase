@@ -157,8 +157,8 @@ class ActionAgent(BasicAgent):
                 print(f"[Action] Hop to new frequency {hop_to}")
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
                 self.db.hmset(self.c["SYSTEM_HOPPING"], {"Freq": hop_to, "PreFreq": pre_freq})
-                print(f"[Action] sleep for 0.2 second")
-                time.sleep(0.2)
+                print(f"[Action] sleep for 2.0 second")
+                time.sleep(2.0)
 
                 payload["ControlAction"] = "HOP:ACK"
                 print(f"[Action] Sendint out {self.c['HOPPING_CTRL_ACT_NOTIFY_NUM']} ACK on new channel. Expecting to receive \"HOP:ACK:ACK\" as response.")
