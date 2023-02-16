@@ -120,10 +120,14 @@ class ActionAgent(BasicAgent):
         return self.db.get(self.c["SYSTEM_ACTION_CHECK"]) is not None
 
     def hop_successful(self):
-        new_freq = int(self.db.hget(self.c['SYSTEM_HOPPING'], 'Freq').decode('utf-8'))
-        print(f"[Action] Hopping successful. Update the system frequency to {new_freq}")
-        self.db.set(self.c['SYSTEM_FREQ'], new_freq)
-        self.db.delete(self.c["SYSTEM_HOPPING"])
+        try:
+            new_freq = int(self.db.hget(self.c['SYSTEM_HOPPING'], 'Freq').decode('utf-8'))
+            print(f"[Action] Hopping successful. Update the system frequency to {new_freq}")
+            self.db.set(self.c['SYSTEM_FREQ'], new_freq)
+            self.db.delete(self.c["SYSTEM_HOPPING"])
+        except Exception as e:
+            e_type, e_obj, e_tb = sys.exc_info()
+            print(f'[Action] Exception occurs: {e}. At line {e_tb.tb_lineno}')
         pass
 
     #-------------------------------------------------------------------------------
@@ -149,8 +153,10 @@ class ActionAgent(BasicAgent):
                 print("[Action] I received hopping request. Trying to reply something back.")
                 # Detecting hopping. Jump to new frequency band and starting transmitting ACK back.
                 hop_to = payload["ControlAction"]
+                pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
                 print(f"[Action] Hop to new frequency {hop_to}")
                 self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
+                self.db.hmset(self.c["SYSTEM_HOPPING"], {"Freq": hop_to, "PreFreq": pre_freq})
                 print(f"[Action] sleep for 0.2 second")
                 time.sleep(0.2)
 
