@@ -67,12 +67,8 @@ class QueueAgent(BasicAgent):
                     # There are some keys in the queue and the RF is Idle.
                     oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
                     # Trigger the Transmission Agent to transmit
-                    # Set the state of RF as Busy
                     p = self.db.pipeline()
-                    # Tell the transmission agent which key to be transmitted
-                    # print(f'Tell transmission agent to trans {oldest_key}')
                     p.set(self.c['KEYWORD_TRANS'], oldest_key)
-                    # Set rf device to Busy
                     p.set(self.c['RFDEVICE_STATE'], self.c['KEYWORD_BUSY'])
                     p.execute()
                     p.reset()

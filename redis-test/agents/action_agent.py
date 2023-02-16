@@ -126,9 +126,11 @@ class ActionAgent(BasicAgent):
         self.db.delete(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"])
         self.db.delete(self.c["SYSTEM_ACTION_CHECK"])
 
-    def plan_to_check(self):
-        print(f"[Action] set {self.c['SYSTEM_ACTION_CHECK']} True ex={self.c['HOPPING_CTRL_TIMEOUT']}")
-        self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=int(self.c['HOPPING_CTRL_TIMEOUT']))
+    def plan_to_check(self, timeout=None):
+        if timeout is None:
+            timeout = int(self.c['HOPPING_CTRL_TIMEOUT'])
+        print(f"[Action] set {self.c['SYSTEM_ACTION_CHECK']} True ex={timeout}")
+        self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=timeout)
 
     #-------------------------------------------------------------------------------
     def action_to_hop(self):
@@ -158,11 +160,15 @@ class ActionAgent(BasicAgent):
                 del payload["Idx"]
                 print(f"[Action] Sendint out {self.c['HOPPING_CTRL_ACT_NOTIFY_NUM']} ACK on new channel.")
                 for i in range(self.c["HOPPING_CTRL_ACT_NOTIFY_NUM"]):
-                    print(f"[Action] Sending #{i} action noitify. {self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])}")
+                    new_freq_ack_in_db = self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])
+                    print(f"[Action] Sending #{i} action noitify. {new_freq_ack_in_db}")
+                    if new_freq_ack_in_db is not None:
+                        print("[Action] receive NEW:FREQ:ACK. Stop sending out HOP:ACK")
+                        break
                     self.db.set(self.c["TRANS_FREQ_HOP"], json.dumps(payload))
                     time.sleep(0.01)
                 print(f"[Action] Send out all the ACK.")
-                self.plan_to_check()
+                self.plan_to_check(timeout=15)
             elif payload["ControlAction"] == "HOP:ACK":
                 """ This is on the Initiator side
                 payload:
@@ -172,11 +178,16 @@ class ActionAgent(BasicAgent):
                 print(f"[Action] Receive HOP:ACK on new channel. Reply ACK:ACK")
                 self.db.set(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"], "True")
                 payload["ControlAction"] = "HOP:ACK:ACK"
+                time.sleep(0.2)
                 for i in range(self.c["HOPPING_CTRL_ACT_NOTIFY_NUM"]):
-                    print(f"[Action] Sending #{i} ACK for action noitify. {self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])}")
+                    new_freq_ack_in_db = self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])
+                    print(f"[Action] Sending #{i} ACK for action noitify. {new_freq_ack_in_db}")
+                    if new_freq_ack_in_db is not None:
+                        print("[Action] receive NEW:FREQ:ACK. Stop sending out HOP:ACK")
+                        break
                     self.db.set(self.c["TRANS_FREQ_HOP"], json.dumps(payload))
                     time.sleep(0.01)
-                
+                print(f"[Action] Send out all the ACK:ACK.")
                 self.release_system()
                 
             elif payload["ControlAction"] == "HOP:ACK:ACK":
