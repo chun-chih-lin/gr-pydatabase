@@ -126,6 +126,10 @@ class ActionAgent(BasicAgent):
         self.db.delete(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"])
         self.db.delete(self.c["SYSTEM_ACTION_CHECK"])
 
+    def plan_to_check(self):
+        print(f"[Action] set {self.c['SYSTEM_ACTION_CHECK']} True ex={self.c['HOPPING_CTRL_TIMEOUT']}")
+        self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=int(self.c['HOPPING_CTRL_TIMEOUT']))
+
     #-------------------------------------------------------------------------------
     def action_to_hop(self):
 
@@ -159,6 +163,7 @@ class ActionAgent(BasicAgent):
                     self.db.set(self.c["TRANS_FREQ_HOP"], json.dumps(payload))
                     time.sleep(0.01)
                 print(f"[Action] Send out all the ACK.")
+                self.plan_to_check()
             elif payload["ControlAction"] == "HOP:ACK":
                 """ This is on the Initiator side
                 payload:
@@ -309,8 +314,7 @@ class ActionAgent(BasicAgent):
                 self.db.set(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'], "Wait")
 
                 print(f"[Action] Expire check {self.c['HOPPING_CTRL_TIMEOUT']} s")
-                print(f"[Action] set {self.c['SYSTEM_ACTION_CHECK']} True ex={self.c['HOPPING_CTRL_TIMEOUT']}")
-                self.db.set(self.c["SYSTEM_ACTION_CHECK"], "True", ex=int(self.c['HOPPING_CTRL_TIMEOUT']))
+                self.plan_to_check()
 
         except Exception as exp:
             e_type, e_obj, e_tb = sys.exc_info()
