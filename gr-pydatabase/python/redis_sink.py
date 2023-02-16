@@ -229,10 +229,10 @@ class redis_sink(gr.sync_block):
                                 if isinstance(payload_dict["ControlAction"], (int, float)):
                                     self.redis_db.set("RFSYSTEM:STATE", "Hold")
                                 elif payload_dict["ControlAction"] == "HOP:ACK":
-                                    self.action_to_hop(payload)
+                                    pass
                                 elif payload_dict["ControlAction"] == "HOP:ACK:ACK":
                                     self.redis_db.set("NEW:FREQ:ACK", "True")
-                                    self.action_to_hop(payload)
+                                self.action_to_hop(payload)
                             return
                             self.msg_debug('If it is a ControlType frame, this line should not be executed')
                         # ---------------------
