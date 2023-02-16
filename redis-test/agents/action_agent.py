@@ -282,9 +282,9 @@ class ActionAgent(BasicAgent):
                 # Initiating the attempt, Stage 3.
                 current_freq = int(self.db.get(self.c['SYSTEM_FREQ']).decode("utf-8"))
                 print(f"[Action] Channels: {self.c['DOT_11_CHANNELS'].copy()}")
-                print(f"[Aciton] I'm using {current_freq} ...")
+                print(f"[Aciton] I'm using {current_freq} {type(current_freq)}...")
                 option = [int(f) for f in self.c['DOT_11_CHANNELS']].remove(current_freq)
-                print(f"[Action] Choose hopt_to: {option}")
+                print(f"[Action] Choose hopt_to: {option} {type(option[0])} {type(option[1])}")
                 # hop_to = self.choose_channel()
                 hop_to = 2442000000
                 
