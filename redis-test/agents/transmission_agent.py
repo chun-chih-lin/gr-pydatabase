@@ -71,6 +71,7 @@ class TransAgent(BasicAgent):
         waiting_interval = 0.001
 
         while retry_count < self.c['RETRY_MAX']:
+            print(f"[Trans] Monitor ACK: {self.db.get(self.c['MONITOR_ACK'])}")
             if self.db.get(self.c['SYSTEM_STATE']).decode('utf-8') == self.c['SYSTEM_TRANS_HOLD']:
                 print('System holds')
                 return

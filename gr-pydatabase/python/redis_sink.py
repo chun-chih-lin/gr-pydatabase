@@ -256,6 +256,7 @@ class redis_sink(gr.sync_block):
                         else:
                             # Someone just replied a ACK to me
                             if header_info['type'] == self.FRMAE_CTRL and header_info['subtype'] == 13:
+                                print("[Sink] Receiving ACK")
                                 self.action_to_ack()
                     else:
                         # The destination is not me. Discard the received pkt.
