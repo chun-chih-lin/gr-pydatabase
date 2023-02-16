@@ -121,7 +121,7 @@ class ActionAgent(BasicAgent):
 
     def hop_successful(self):
         try:
-            new_freq = int(self.db.hget(self.c['SYSTEM_HOPPING'], 'Freq').decode('utf-8'))
+            new_freq = int(self.db.hget(self.c['TUNE_RF'], 'Freq').decode('utf-8'))
             print(f"[Action] Hopping successful. Update the system frequency to {new_freq}")
             self.db.set(self.c['SYSTEM_FREQ'], new_freq)
             self.db.delete(self.c["SYSTEM_HOPPING"])
