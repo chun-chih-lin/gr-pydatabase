@@ -52,18 +52,17 @@ class QueueAgent(BasicAgent):
                 print(f"[Queue] ACK for the key: {ack_for_key}")
                 fail_count = int(self.db.get(self.c['FAIL_ACK_NUM']).decode("utf-8"))
                 print(f"[Queue] Consecutive failed: {fail_count}")
-                if ack_for_key is not None:
+                
+                if fail_count >= 10:
+                    self.db.set(self.c["SYSTEM_ACTION_DEBUG"], "True")
+                    self.db.set(self.c["FAIL_ACK_NUM"], 0)
+                    time.sleep(0.2)
+                elif ack_for_key is not None:
                     print(f"[Queue] ack_for_key is not None")
                     print(f"[Queue] fail count: {fail_count}")
                     if ack_for_key.decode("utf-8") == "Failed":
                         print("It is failed, pop it.")
                         self.db.rpop(db_key)
-                        self.db.set(self.c["FAIL_ACK_NUM"], fail_count+1)
-                        if fail_count >= 10:
-                            self.db.set(self.c["SYSTEM_ACTION_DEBUG"], "True")
-                            self.db.set(self.c["FAIL_ACK_NUM"], 0)
-                            time.sleep(0.2)
-                
                 elif rf_device_state == self.c['KEYWORD_IDLE']:
                     # There are some keys in the queue and the RF is Idle.
                     oldest_key = self.utf8_decode(self.db.lrange(db_key, -1, -1)[0])
