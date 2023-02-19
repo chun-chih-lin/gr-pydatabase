@@ -60,16 +60,11 @@ class ActionAgent(BasicAgent):
                     self.db.lpush(self.c["SYSTEM_CSI_QUEUE"], csi_key)
                     if len(self.db.lrange(self.c["SYSTEM_CSI_QUEUE"], 0, -1)) > self.c["MAX_CSI_RECORD"]:
                         oldest_csi_key = self.db.rpop(self.c["SYSTEM_CSI_QUEUE"])
-                        # print(f'Adding new key: {csi_key}. Delete oldest key: {oldest_csi_key}')
-                        # print(f'*** db.delete({oldest_csi_key})')
                         self.db.delete(oldest_csi_key)
                         # We have enough CSI in the Queue, try to detect the interference.
                         self.detect_interference()
                 else:
                     # The key is older somehow. Discard it.
-                    # print(f'incoming key: {csi_key} is older somehow, discard it.')
-                    # print(f'keys in queue: {newest_key}')
-                    # print(f'*** db.delete({csi_key})')
                     self.db.delete(csi_key)
             elif action == self.c["SYSTEM_ACTION_TYPE_HOP"] and msg["data"].decode("utf-8") != "del":
                 self.action_to_hop()
@@ -178,7 +173,7 @@ class ActionAgent(BasicAgent):
                 print(f"[Action] hmset {self.c['SYSTEM_HOPPING']} Freq {hop_to} PreFreq {pre_freq}")
                 self.db.hmset(self.c["SYSTEM_HOPPING"], {"Freq": hop_to, "PreFreq": pre_freq})
                 print(f"[Action] sleep for 2.0 second")
-                time.sleep(2.0)
+                time.sleep(5.0)
 
                 payload["ControlAction"] = "HOP:ACK"
                 print(f"[Action] Sendint out {self.c['HOPPING_CTRL_ACT_NOTIFY_NUM']} ACK on new channel. Expecting to receive \"HOP:ACK:ACK\" as response.")
