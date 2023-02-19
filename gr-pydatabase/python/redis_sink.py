@@ -223,15 +223,18 @@ class redis_sink(gr.sync_block):
                         self.msg_debug("Is for me and received something.")
                         if payload_dict.get('ControlType') is not None:
                             self.msg_debug(f"[Sink] payload: {payload}")
+                            print(f"[Sink] payload: {payload}")
                             # It is a control data frame.
                             if payload_dict['ControlType'] == "HOP":
                                 self.msg_debug("Hold the system until hopping is completed")
                                 if isinstance(payload_dict["ControlAction"], (int, float)):
                                     self.redis_db.set("RFSYSTEM:STATE", "Hold")
                                 elif payload_dict["ControlAction"] == "HOP:ACK":
+                                    print("[Sink] Receive a HOP:ACK")
                                     pass
                                 elif payload_dict["ControlAction"] == "HOP:ACK:ACK":
                                     self.redis_db.set("NEW:FREQ:ACK", "True")
+                                    print("[Sink] Receive a HOP:ACK:ACK")
                                 self.action_to_hop(payload)
                             return
                             self.msg_debug('If it is a ControlType frame, this line should not be executed')
@@ -276,7 +279,7 @@ class redis_sink(gr.sync_block):
         pass
 
     def action_to_hop(self, payload):
-        self.msg_debug(f'action to hop {payload}')
+        print(f'action to hop {payload}')
         self.redis_db.set("SYSTEM:ACTION:HOP", payload)
         pass
 
