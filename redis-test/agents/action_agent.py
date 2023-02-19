@@ -15,7 +15,19 @@ class ActionAgent(BasicAgent):
     def __init__(self, subprefix, agentkey):
         super(ActionAgent, self).__init__("ActionAgent", subprefix, agentkey)
         self.init_hop()
+        self.tune_gain()
         print('ActionAgent Initialization done.')
+
+    def tune_gain(self):
+        gain = self.db.hget("TuneRF:11", "Gain").decode("utf-8")
+        gain = float(gain)
+        if gain > 0.9:
+            self.db.hset("TuneRF:11", "Gain", gain-0.1)
+        else:
+            self.db.hset("TuneRF:11", "Gain", gain+0.1)
+        time.sleep(0.01)
+        self.db.hset("TuneRF:11", "Gain", gain)
+        self.db.set("SYSTEM:ACTION:TUNE", "True", ex=10)
 
     def agent_event_handler(self, msg):
         try:
@@ -82,6 +94,9 @@ class ActionAgent(BasicAgent):
 
                 self.release_system()
                 return
+            elif action == "TUNE":
+                if msg["data"].decode("utf-8") == "expired":
+                    return
             else:
                 print(f"Other action: {action}.")
                         
@@ -123,6 +138,10 @@ class ActionAgent(BasicAgent):
         try:
             new_freq = int(self.db.hget(self.c['TUNE_RF'], 'Freq').decode('utf-8'))
             print(f"[Action] Hopping successful. Update the system frequency to {new_freq}")
+            csi_keys = self.db.keys("CSI:*")
+            for key in csi_keys:
+                self.db.delete(key.decode("utf-8"))
+            self.db.delete(self.c['SYSTEM_CSI_QUEUE'])
             self.db.set(self.c['SYSTEM_FREQ'], new_freq)
             self.db.delete(self.c["SYSTEM_HOPPING"])
         except Exception as e:
@@ -155,7 +174,7 @@ class ActionAgent(BasicAgent):
                 hop_to = payload["ControlAction"]
                 pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
                 print(f"[Action] Hop to new frequency {hop_to}")
-                self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
+                self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to})
                 print(f"[Action] hmset {self.c['SYSTEM_HOPPING']} Freq {hop_to} PreFreq {pre_freq}")
                 self.db.hmset(self.c["SYSTEM_HOPPING"], {"Freq": hop_to, "PreFreq": pre_freq})
                 print(f"[Action] sleep for 2.0 second")
@@ -170,7 +189,7 @@ class ActionAgent(BasicAgent):
                         print("[Action] receive NEW:FREQ:ACK. Stop sending out HOP:ACK")
                         break
                     self.db.set(self.c["TRANS_FREQ_HOP"], json.dumps(payload))
-                    time.sleep(0.05)
+                    time.sleep(0.1)
                 print(f"[Action] Send out all the ACK. Waiting for replay. Expecting to receive \"HOP:ACK:ACK\" as response.")
                 self.plan_to_check(timeout=15)
             elif payload["ControlAction"] == "HOP:ACK":
@@ -182,10 +201,11 @@ class ActionAgent(BasicAgent):
                 print(f"[Action] Receive \"HOP:ACK\" on new channel. Reply \"HOP:ACK:ACK\"")
                 self.db.set(self.c["HOPPING_CTRL_ACT_NEW_FREQ_ACK"], "True")
                 payload["ControlAction"] = "HOP:ACK:ACK"
-                time.sleep(0.2)
-                for i in range(self.c["HOPPING_CTRL_ACT_NOTIFY_NUM"]):
+                time.sleep(5.0)
+                for i in range(30):
+                    print(f"[Action] Reply HOP:ACK:ACK. Sending #{i} {payload}")
                     self.db.set(self.c["TRANS_FREQ_HOP"], json.dumps(payload))
-                    time.sleep(0.05)
+                    time.sleep(0.2)
                 print(f"[Action] Send out all the ACK:ACK.")
                 self.release_system()
                 self.hop_successful()
@@ -309,7 +329,7 @@ class ActionAgent(BasicAgent):
                     self.db.set(self.c["TRANS_FREQ_HOP"], json_info)
                     time.sleep(0.1)
 
-                self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to, "Gain": 0.4})
+                self.db.hmset(self.c["TUNE_RF"], {"Freq": hop_to})
                 self.db.set(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'], "Wait")
                 print(f"[Action] I initiate the frequency hopping. Wait for 30 seconds and see if anyone get some response.")
                 self.plan_to_check(timeout=30)
