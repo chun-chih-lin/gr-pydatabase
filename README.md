@@ -81,6 +81,10 @@ $ cp /hiredis/sds.h /usr/local/include/hiredis
 $ gcc -o c-redis c-redis.c -lhiredis
 ```
 
+## Module cannot be found
+Reference: https://www.wime-project.net/installation/
+Reference: https://wiki.gnuradio.org/index.php/ModuleNotFoundError
+
 ## Custom Modification of Denpendency Package
 1. Modify gr-ieee802-11
 In file './lib/parse_mac.cc' line 69, add following condition so the receiver can successfully receive ACK frame.
