@@ -5,6 +5,7 @@ redis-cli -h localhost -p 6379 SET AGENT:QUEUE Starting
 redis-cli -h localhost -p 6379 SET AGENT:ACTION Starting
 
 redis-cli -h localhost -p 6379 HSET TuneRF:11 Freq 2472000000
+redis-cli -h localhost -p 6379 HSET TuneRF:11 Gain 1.0
 redis-cli -h localhost -p 6379 SET SYSTEM:FREQ 2472000000
 redis-cli -h localhost -p 6379 SET RFSYSTEM:STATE Free
 redis-cli -h localhost -p 6379 SET RFDEVICE:STATE Idle
