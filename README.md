@@ -53,6 +53,10 @@ git checkout v1.1.0 && make clean && make && sudo make install
 ```
 ldconfig
 ```
+4. Add python module
+```
+pip install hiredis
+```
 
 __Obsolete__
 1. Clone hiredis
