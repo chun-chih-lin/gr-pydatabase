@@ -77,7 +77,9 @@ class QueueAgent(BasicAgent):
                 else:
                     print('[Queue] Still processing, sleep for 0.01 second.')
                     time.sleep(0.01)
-            print('Done processing all the msg in queue')
+
+                if not self.db.exists(db_key):
+                    print('Done processing all the msg in queue')
         except Exception as exp:
             _, _, e_tb = sys.exc_info()
             print(f'[Queue] Exception occurs: {exp}, Line {e_tb.tb_lineno}')
