@@ -19,6 +19,8 @@ class ActionAgent(BasicAgent):
         print('ActionAgent Initialization done.')
 
     def tune_gain(self):
+        if True:
+            return
         gain = self.db.hget("TuneRF:11", "Gain").decode("utf-8")
         gain = float(gain)
         if gain > 0.9:
