@@ -25,5 +25,7 @@ install(FILES
     pydatabase_redis_var_sink.block.yml
     pydatabase_redis_sink_exp.block.yml
     pydatabase_redis_source_exp.block.yml
-    pydatabase_usrp_command_source.block.yml DESTINATION share/gnuradio/grc/blocks
+    pydatabase_usrp_command_source.block.yml
+    pydatabase_mac.block.yml
+    pydatabase_debugger.block.yml DESTINATION share/gnuradio/grc/blocks
 )

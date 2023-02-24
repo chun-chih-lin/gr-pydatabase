@@ -86,21 +86,21 @@ class USRP_TX_RX(gr.top_block, Qt.QWidget):
         # Variables
         ##################################################
         self.window_size = window_size = 48
-        self.tx_gain = tx_gain = 0.02
+        self.tx_gain = tx_gain = 1.0
         self.sync_length = sync_length = 320
         self.sdr_addr = sdr_addr = "addr=192.168.40.2"
         self.samp_rate = samp_rate = 20e6
         self.out_buf_size = out_buf_size = 96000
         self.lo_offset = lo_offset = 0
-        self.gain_nor = gain_nor = 0.02
-        self.freq = freq = 2484e6
+        self.gain_nor = gain_nor = 1.0
+        self.freq = freq = 2472e6
         self.encoding = encoding = 0
         self.chan_est = chan_est = 0
 
         ##################################################
         # Blocks
         ##################################################
-        self._tx_gain_range = Range(0, 1, 0.01, 0.02, 200)
+        self._tx_gain_range = Range(0, 1, 0.01, 1.0, 200)
         self._tx_gain_win = RangeWidget(self._tx_gain_range, self.set_tx_gain, 'tx_gain', "counter_slider", float)
         self.top_layout.addWidget(self._tx_gain_win)
         # Create the options list
@@ -135,7 +135,7 @@ class USRP_TX_RX(gr.top_block, Qt.QWidget):
             lambda i: self.set_lo_offset(self._lo_offset_options[i]))
         # Create the radio buttons
         self.top_layout.addWidget(self._lo_offset_tool_bar)
-        self._gain_nor_range = Range(0, 1, 0.01, 0.02, 200)
+        self._gain_nor_range = Range(0, 1, 0.01, 1.0, 200)
         self._gain_nor_win = RangeWidget(self._gain_nor_range, self.set_gain_nor, 'gain_nor', "counter_slider", float)
         self.top_layout.addWidget(self._gain_nor_win)
         # Create the options list
@@ -241,7 +241,7 @@ class USRP_TX_RX(gr.top_block, Qt.QWidget):
         self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
             1024, #size
             firdes.WIN_BLACKMAN_hARRIS, #wintype
-            freq, #fc
+            0, #fc
             samp_rate, #bw
             "", #name
             1
@@ -278,6 +278,46 @@ class USRP_TX_RX(gr.top_block, Qt.QWidget):
 
         self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.pyqwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_freq_sink_x_0_win)
+        self.qtgui_const_sink_x_0 = qtgui.const_sink_c(
+            48*10, #size
+            "", #name
+            1 #number of inputs
+        )
+        self.qtgui_const_sink_x_0.set_update_time(0.10)
+        self.qtgui_const_sink_x_0.set_y_axis(-2, 2)
+        self.qtgui_const_sink_x_0.set_x_axis(-2, 2)
+        self.qtgui_const_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, "")
+        self.qtgui_const_sink_x_0.enable_autoscale(False)
+        self.qtgui_const_sink_x_0.enable_grid(False)
+        self.qtgui_const_sink_x_0.enable_axis_labels(True)
+
+
+        labels = ['', '', '', '', '',
+            '', '', '', '', '']
+        widths = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        colors = ["blue", "red", "red", "red", "red",
+            "red", "red", "red", "red", "red"]
+        styles = [0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0]
+        markers = [0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0]
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0]
+
+        for i in range(1):
+            if len(labels[i]) == 0:
+                self.qtgui_const_sink_x_0.set_line_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_const_sink_x_0.set_line_label(i, labels[i])
+            self.qtgui_const_sink_x_0.set_line_width(i, widths[i])
+            self.qtgui_const_sink_x_0.set_line_color(i, colors[i])
+            self.qtgui_const_sink_x_0.set_line_style(i, styles[i])
+            self.qtgui_const_sink_x_0.set_line_marker(i, markers[i])
+            self.qtgui_const_sink_x_0.set_line_alpha(i, alphas[i])
+
+        self._qtgui_const_sink_x_0_win = sip.wrapinstance(self.qtgui_const_sink_x_0.pyqwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_const_sink_x_0_win)
         self.pydatabase_usrp_command_source_0 = pydatabase.usrp_command_source()
         self.pydatabase_redis_source_0 = pydatabase.redis_source('channel_1', 6379, 'localhost', 0, False)
         self.pydatabase_redis_sink_0 = pydatabase.redis_sink('channel_1', 6379, 'localhost', 0, '', False)
@@ -293,6 +333,7 @@ class USRP_TX_RX(gr.top_block, Qt.QWidget):
         self.blocks_vector_source_x_0 = blocks.vector_source_c((0,), False, 1, [])
         self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_gr_complex*1, 64)
         self.blocks_socket_pdu_0 = blocks.socket_pdu('UDP_SERVER', '', '52001', 10000, False)
+        self.blocks_pdu_to_tagged_stream_1 = blocks.pdu_to_tagged_stream(blocks.complex_t, 'packet_len')
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_cc(0.6)
         self.blocks_multiply_const_vxx_0.set_min_output_buffer(100000)
@@ -312,6 +353,7 @@ class USRP_TX_RX(gr.top_block, Qt.QWidget):
         self.msg_connect((self.blocks_socket_pdu_0, 'pdus'), (self.wifi_phy_hier_0, 'mac_in'))
         self.msg_connect((self.drl_get_freq_0, 'freq'), (self.ieee802_11_frame_equalizer_0, 'freq'))
         self.msg_connect((self.ieee802_11_decode_mac_0, 'out'), (self.pydatabase_redis_sink_0, 'pdu'))
+        self.msg_connect((self.ieee802_11_frame_equalizer_0, 'symbols'), (self.blocks_pdu_to_tagged_stream_1, 'pdus'))
         self.msg_connect((self.ieee802_11_mac_0, 'phy out'), (self.wifi_phy_hier_0, 'mac_in'))
         self.msg_connect((self.pydatabase_redis_source_0, 'pdu'), (self.ieee802_11_mac_0, 'app in'))
         self.msg_connect((self.pydatabase_usrp_command_source_0, 'msg'), (self.uhd_usrp_sink_0, 'command'))
@@ -328,6 +370,7 @@ class USRP_TX_RX(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_moving_average_xx_1, 0), (self.ieee802_11_sync_short_0, 1))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.foo_packet_pad2_0, 0))
         self.connect((self.blocks_multiply_xx_0, 0), (self.blocks_moving_average_xx_1, 0))
+        self.connect((self.blocks_pdu_to_tagged_stream_1, 0), (self.qtgui_const_sink_x_0, 0))
         self.connect((self.blocks_stream_to_vector_0, 0), (self.fft_vxx_0, 0))
         self.connect((self.blocks_vector_source_x_0, 0), (self.wifi_phy_hier_0, 0))
         self.connect((self.fft_vxx_0, 0), (self.ieee802_11_frame_equalizer_0, 0))
@@ -383,7 +426,7 @@ class USRP_TX_RX(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self._samp_rate_callback(self.samp_rate)
         self.ieee802_11_frame_equalizer_0.set_bandwidth(self.samp_rate)
-        self.qtgui_freq_sink_x_0.set_frequency_range(self.freq, self.samp_rate)
+        self.qtgui_freq_sink_x_0.set_frequency_range(0, self.samp_rate)
         self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
         self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
         self.wifi_phy_hier_0.set_bandwidth(self.samp_rate)
@@ -417,7 +460,6 @@ class USRP_TX_RX(gr.top_block, Qt.QWidget):
         self.freq = freq
         self._freq_callback(self.freq)
         self.ieee802_11_frame_equalizer_0.set_frequency(self.freq)
-        self.qtgui_freq_sink_x_0.set_frequency_range(self.freq, self.samp_rate)
         self.uhd_usrp_sink_0.set_center_freq(uhd.tune_request(self.freq, rf_freq = self.freq - self.lo_offset, rf_freq_policy=uhd.tune_request.POLICY_MANUAL), 0)
         self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(self.freq, rf_freq = self.freq - self.lo_offset, rf_freq_policy=uhd.tune_request.POLICY_MANUAL), 0)
         self.wifi_phy_hier_0.set_frequency(self.freq)
