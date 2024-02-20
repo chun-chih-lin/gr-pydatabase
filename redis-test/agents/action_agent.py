@@ -135,6 +135,7 @@ class ActionAgent(BasicAgent):
         try:
             new_freq = int(self.db.hget(self.c['TUNE_RF'], 'Freq').decode('utf-8'))
             print(f"[Action] Hopping successful. Update the system frequency to {new_freq}")
+            self.db.set("LED:HOP:Light", 1)
             csi_keys = self.db.keys("CSI:*")
             for key in csi_keys:
                 self.db.delete(key.decode("utf-8"))
@@ -179,6 +180,7 @@ class ActionAgent(BasicAgent):
 
                 payload["ControlAction"] = "HOP:ACK"
                 print(f"[Action] Sendint out {self.c['HOPPING_CTRL_ACT_NOTIFY_NUM']} ACK on new channel. Expecting to receive \"HOP:ACK:ACK\" as response.")
+                self.db.set("LED:HOP:Light", 0)
                 for i in range(self.c["HOPPING_CTRL_ACT_NOTIFY_NUM"]):
                     new_freq_ack_in_db = self.db.get(self.c['HOPPING_CTRL_ACT_NEW_FREQ_ACK'])
                     print(f"[Action] Sending #{i} action noitify ACK \"HOP:ACK\". {new_freq_ack_in_db}")
