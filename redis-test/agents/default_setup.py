@@ -11,7 +11,7 @@ def get_mac_address():
 	return mac
 
 def get_mac_addr_by_name(name):
-	iface_info = netifaces.ifaddresses('eno1')[netifaces.AF_LINK]
+	iface_info = netifaces.ifaddresses('enp0s31f6')[netifaces.AF_LINK]
 	mac = iface_info[0]["addr"]
 	return mac
 
