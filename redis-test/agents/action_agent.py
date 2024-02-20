@@ -168,6 +168,7 @@ class ActionAgent(BasicAgent):
                     Idx: try_c
                 """
                 print("[Action] I received hopping request. Trying to reply something back.")
+                self.db.set("LEF:HOP:Light", 0)
                 # Detecting hopping. Jump to new frequency band and starting transmitting ACK back.
                 hop_to = payload["ControlAction"]
                 pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")
@@ -302,6 +303,7 @@ class ActionAgent(BasicAgent):
                 # Hold the system, Stage 2.
                 # self.db.hset(self.c["SYSTEM_HOPPING"], "Stage", 2)
                 self.db.set(self.c["SYSTEM_STATE"], self.c["SYSTEM_TRANS_HOLD"])
+                self.db.set("LED:HOP:Light", 0)
 
                 # Initiating the attempt, Stage 3.
                 current_freq = int(self.db.get(self.c['SYSTEM_FREQ']).decode("utf-8"))
