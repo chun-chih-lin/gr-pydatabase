@@ -190,6 +190,7 @@ class ActionAgent(BasicAgent):
                     self.db.set(self.c["TRANS_FREQ_HOP"], json.dumps(payload))
                     time.sleep(0.1)
                 print(f"[Action] Send out all the ACK. Waiting for replay. Expecting to receive \"HOP:ACK:ACK\" as response.")
+                self.db.set("LED:HOP:Light", 0)
                 self.plan_to_check(timeout=15)
             elif payload["ControlAction"] == "HOP:ACK":
                 """ This is on the Initiator side
