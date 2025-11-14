@@ -1,5 +1,5 @@
 # gr-pydatabase
-Custom module for gnuradio connects to several databases
+Custom module for gnuradio connects to several databases  
 This is also the same project that I used for frequency hopping demo for VIPR-GS
 
 # Python verison
