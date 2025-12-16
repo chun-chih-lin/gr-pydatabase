@@ -2,6 +2,9 @@
 Custom module for gnuradio connects to several databases  
 This is also the same project that I used for frequency hopping demo for VIPR-GS
 
+# Note:
+Please check the src addr and dst addr for the Wi-Fi Physical layer information in the module.
+
 # Python verison
 The repository reqiures python3.6 or later version.
 Check python with
