@@ -36,7 +36,7 @@ if input_c >= 5:
 r, subprefix = utils.redis_setup(db_host='localhost', db_port=6379, db_ch='channel_1', db_idx=0)
 
 def parse_arg():
-    DEFAULT_N_PKT = 10
+    DEFAULT_N_PKT = 2000
     DEFAULT_INTERVAL = 0.001
 
     parser = argparse.ArgumentParser(description="This script is the interface between user and the RF front-end.")
@@ -46,7 +46,7 @@ def parse_arg():
                         help="The transmitted message.")
     parser.add_argument("--itvl", type=float, default=DEFAULT_INTERVAL,
                         help="The interval between two packets can be sent out.")
-    parser.add_argument("--n_pkt", type=int, default=DEFAULT_N_PKT,
+    parser.add_argument("-n", "--n_pkt", type=int, default=DEFAULT_N_PKT,
                         help="The number of transmitted packets.")
     args = parser.parse_args()
     return args.id, args.msg, args.itvl, args.n_pkt

@@ -329,6 +329,7 @@ class redis_sink(gr.sync_block):
             # self.pipeline.set(f'CSI:{timestamp}', csi_json)
             # self.pipeline.set("SYSTEM:ACTION:CSI", f'CSI:{timestamp}')
             self.store_CSI(timestamp, csi_json)
+            self.redis_db.set("LED:HOP:Light", 1)
         except Exception as exp:
             self.msg_debug(f'[Redis_sink] Exception: set_to_db {exp}')
             self.msg_debug(f'[Redis_sink] Exception: payload:\n', payload, '\ninfo:\n', info_json)

@@ -281,7 +281,7 @@ blocks:
     options: '[5e6, 10e6, 20e6]'
     orient: Qt.QVBoxLayout
     type: real
-    value: 20e6
+    value: 10e6
     widget: combo_box
   states:
     bus_sink: false
@@ -294,7 +294,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '"addr=192.168.40.2"'
+    value: '"addr=192.168.20.2"'
   states:
     bus_sink: false
     bus_source: false
@@ -910,13 +910,13 @@ blocks:
     offColor: red
     onColor: green
     position: '1'
-    state: 'False'
+    state: 'True'
     verticalalignment: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1016, 244.0]
+    coordinate: [1080, 244.0]
     rotation: 0
     state: enabled
 - name: tuntap_310_control_led_0

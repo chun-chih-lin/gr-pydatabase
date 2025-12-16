@@ -16,6 +16,7 @@ class ActionAgent(BasicAgent):
         super(ActionAgent, self).__init__("ActionAgent", subprefix, agentkey)
         self.init_hop()
         self.tune_gain()
+        self.db.set("LED:HOP:Light", 1)
         print('ActionAgent Initialization done.')
 
     def tune_gain(self):
@@ -168,7 +169,7 @@ class ActionAgent(BasicAgent):
                     Idx: try_c
                 """
                 print("[Action] I received hopping request. Trying to reply something back.")
-                self.db.set("LEF:HOP:Light", 0)
+                self.db.set("LED:HOP:Light", 0)
                 # Detecting hopping. Jump to new frequency band and starting transmitting ACK back.
                 hop_to = payload["ControlAction"]
                 pre_freq = self.db.get("SYSTEM:FREQ").decode("utf-8")

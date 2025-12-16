@@ -11,10 +11,6 @@
 
 from PyQt5 import Qt
 from gnuradio import qtgui
-import os
-import sys
-sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
-
 from PyQt5 import QtCore
 from PyQt5.QtCore import QObject, pyqtSlot
 from gnuradio import blocks
@@ -22,24 +18,20 @@ from gnuradio import fft
 from gnuradio.fft import window
 from gnuradio import gr
 from gnuradio.filter import firdes
+import sys
 import signal
 from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
-from gnuradio import network
-from gnuradio import tuntap_310
 from gnuradio import uhd
 import time
-from wifi_phy_hier import wifi_phy_hier  # grc-generated hier_block
-import drl
-import foo
 import ieee802_11
 import pydatabase
 
 
 
-class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
+class Redis_sink(gr.top_block, Qt.QWidget):
 
     def __init__(self):
         gr.top_block.__init__(self, "Not titled yet", catch_exceptions=True)
@@ -62,7 +54,7 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "USRP_TX_RX_310")
+        self.settings = Qt.QSettings("GNU Radio", "Redis_sink")
 
         try:
             geometry = self.settings.value("geometry")
@@ -75,24 +67,17 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         # Variables
         ##################################################
         self.window_size = window_size = 48
-        self.tx_gain = tx_gain = 1.0
         self.sync_length = sync_length = 320
-        self.sdr_addr = sdr_addr = "addr=192.168.20.2"
-        self.samp_rate = samp_rate = 10e6
-        self.out_buf_size = out_buf_size = 96000
+        self.samp_rate = samp_rate = 20e6
         self.lo_offset = lo_offset = 0
-        self.gain_nor = gain_nor = 1.0
-        self.freq = freq = 2472e6
-        self.encoding = encoding = 0
+        self.gain_nor = gain_nor = 0.7
+        self.freq = freq = 2472000000
         self.chan_est = chan_est = 0
 
         ##################################################
         # Blocks
         ##################################################
 
-        self._tx_gain_range = qtgui.Range(0, 1, 0.01, 1.0, 200)
-        self._tx_gain_win = qtgui.RangeWidget(self._tx_gain_range, self.set_tx_gain, "'tx_gain'", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._tx_gain_win)
         # Create the options list
         self._samp_rate_options = [5000000.0, 10000000.0, 20000000.0]
         # Create the labels list
@@ -125,7 +110,7 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
             lambda i: self.set_lo_offset(self._lo_offset_options[i]))
         # Create the radio buttons
         self.top_layout.addWidget(self._lo_offset_tool_bar)
-        self._gain_nor_range = qtgui.Range(0, 1, 0.01, 1.0, 200)
+        self._gain_nor_range = qtgui.Range(0, 1, 0.01, 0.7, 200)
         self._gain_nor_win = qtgui.RangeWidget(self._gain_nor_range, self.set_gain_nor, "'gain_nor'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._gain_nor_win)
         # Create the options list
@@ -145,32 +130,7 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         # Create the radio buttons
         self.top_layout.addWidget(self._freq_tool_bar)
         # Create the options list
-        self._encoding_options = [0, 1, 2, 3, 4, 5, 6, 7]
-        # Create the labels list
-        self._encoding_labels = ['BPSK 1/2', 'BPSK 3/4', 'QPSK 1/2', 'QPSK 3/4', '16QAM 1/2', '16QAM 3/4', '64QAM 2/3', '64QAM 3/4']
-        # Create the combo box
-        # Create the radio buttons
-        self._encoding_group_box = Qt.QGroupBox("'encoding'" + ": ")
-        self._encoding_box = Qt.QHBoxLayout()
-        class variable_chooser_button_group(Qt.QButtonGroup):
-            def __init__(self, parent=None):
-                Qt.QButtonGroup.__init__(self, parent)
-            @pyqtSlot(int)
-            def updateButtonChecked(self, button_id):
-                self.button(button_id).setChecked(True)
-        self._encoding_button_group = variable_chooser_button_group()
-        self._encoding_group_box.setLayout(self._encoding_box)
-        for i, _label in enumerate(self._encoding_labels):
-            radio_button = Qt.QRadioButton(_label)
-            self._encoding_box.addWidget(radio_button)
-            self._encoding_button_group.addButton(radio_button, i)
-        self._encoding_callback = lambda i: Qt.QMetaObject.invokeMethod(self._encoding_button_group, "updateButtonChecked", Qt.Q_ARG("int", self._encoding_options.index(i)))
-        self._encoding_callback(self.encoding)
-        self._encoding_button_group.buttonClicked[int].connect(
-            lambda i: self.set_encoding(self._encoding_options[i]))
-        self.top_layout.addWidget(self._encoding_group_box)
-        # Create the options list
-        self._chan_est_options = [0, 1, 2, 3]
+        self._chan_est_options = [<Equalizer.LS: 0>, <Equalizer.LMS: 1>, <Equalizer.STA: 3>, <Equalizer.COMB: 2>]
         # Create the labels list
         self._chan_est_labels = ['LS', 'LMS', 'STA', 'Linear Comb']
         # Create the combo box
@@ -194,15 +154,8 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         self._chan_est_button_group.buttonClicked[int].connect(
             lambda i: self.set_chan_est(self._chan_est_options[i]))
         self.top_layout.addWidget(self._chan_est_group_box)
-        self.wifi_phy_hier_0 = wifi_phy_hier(
-            bandwidth=samp_rate,
-            chan_est=0,
-            encoding=encoding,
-            frequency=freq,
-            sensitivity=0.56,
-        )
         self.uhd_usrp_source_0 = uhd.usrp_source(
-            ",".join(('', sdr_addr)),
+            ",".join(('', "addr=192.168.20.2")),
             uhd.stream_args(
                 cpu_format="fc32",
                 args='',
@@ -215,43 +168,14 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(freq, rf_freq = freq - lo_offset, rf_freq_policy=uhd.tune_request.POLICY_MANUAL), 0)
         self.uhd_usrp_source_0.set_antenna('RX2', 0)
         self.uhd_usrp_source_0.set_gain(gain_nor, 0)
-        self.uhd_usrp_sink_0 = uhd.usrp_sink(
-            ",".join(('', sdr_addr)),
-            uhd.stream_args(
-                cpu_format="fc32",
-                args='',
-                channels=list(range(0,1)),
-            ),
-            'packet_len',
-        )
-        self.uhd_usrp_sink_0.set_samp_rate(samp_rate)
-        # No synchronization enforced.
-
-        self.uhd_usrp_sink_0.set_center_freq(uhd.tune_request(freq, rf_freq = freq - lo_offset, rf_freq_policy=uhd.tune_request.POLICY_MANUAL), 0)
-        self.uhd_usrp_sink_0.set_antenna('TX/RX', 0)
-        self.uhd_usrp_sink_0.set_gain(tx_gain, 0)
-        self.tuntap_310_control_led_0 = tuntap_310.control_led('HOP')
-        self.qtgui_ledindicator_0 = self._qtgui_ledindicator_0_win = qtgui.GrLEDIndicator("", "green", "red", True, 400, 1, 1, 1, self)
-        self.qtgui_ledindicator_0 = self._qtgui_ledindicator_0_win
-        self.top_layout.addWidget(self._qtgui_ledindicator_0_win)
-        self.pydatabase_usrp_command_source_0 = pydatabase.usrp_command_source()
-        self.pydatabase_redis_source_0 = pydatabase.redis_source('channel_1', 6379, 'localhost', 0, False)
-        self.pydatabase_redis_sink_0 = pydatabase.redis_sink('channel_1', 6379, 'localhost', 0, '', False)
-        self.network_socket_pdu_0 = network.socket_pdu('UDP_SERVER', '', '52001', 10000, False)
+        self.pydatabase_redis_sink_0 = pydatabase.redis_sink('channel_1', 6379, 'localhost', 0, '00:00:00:00:00:00', False)
         self.ieee802_11_sync_short_0 = ieee802_11.sync_short(0.56, 2, False, False)
-        self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, False, False)
-        self.ieee802_11_mac_0 = ieee802_11.mac([0x08, 0x92, 0x04, 0xe3, 0x79, 0x84], [0x08, 0x92, 0x04, 0xe3, 0x76, 0xfb], [0x8c, 0xec, 0x4b, 0xa7, 0x3c, 0x4f])
+        self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, True, False)
         self.ieee802_11_frame_equalizer_0 = ieee802_11.frame_equalizer(chan_est, freq, samp_rate, False, False)
-        self.ieee802_11_decode_mac_0 = ieee802_11.decode_mac(False, False)
-        self.foo_packet_pad2_0 = foo.packet_pad2(False, False, 0.01, 100, 1000)
-        self.foo_packet_pad2_0.set_min_output_buffer(out_buf_size)
+        self.ieee802_11_decode_mac_0 = ieee802_11.decode_mac(True, False)
         self.fft_vxx_0 = fft.fft_vcc(64, True, window.rectangular(64), True, 1)
-        self.drl_get_freq_0 = drl.get_freq()
-        self.blocks_vector_source_x_0 = blocks.vector_source_c((0,), False, 1, [])
         self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_gr_complex*1, 64)
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
-        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_cc(0.6)
-        self.blocks_multiply_const_vxx_0.set_min_output_buffer(100000)
         self.blocks_moving_average_xx_1 = blocks.moving_average_cc(window_size, 1, 4000, 1)
         self.blocks_moving_average_xx_0 = blocks.moving_average_ff((window_size  + 16), 1, 4000, 1)
         self.blocks_divide_xx_0 = blocks.divide_ff(1)
@@ -265,14 +189,7 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
-        self.msg_connect((self.drl_get_freq_0, 'freq'), (self.ieee802_11_frame_equalizer_0, 'freq'))
         self.msg_connect((self.ieee802_11_decode_mac_0, 'out'), (self.pydatabase_redis_sink_0, 'pdu'))
-        self.msg_connect((self.ieee802_11_mac_0, 'phy out'), (self.wifi_phy_hier_0, 'mac_in'))
-        self.msg_connect((self.network_socket_pdu_0, 'pdus'), (self.wifi_phy_hier_0, 'mac_in'))
-        self.msg_connect((self.pydatabase_redis_source_0, 'pdu'), (self.ieee802_11_mac_0, 'app in'))
-        self.msg_connect((self.pydatabase_usrp_command_source_0, 'msg'), (self.uhd_usrp_sink_0, 'command'))
-        self.msg_connect((self.pydatabase_usrp_command_source_0, 'msg'), (self.uhd_usrp_source_0, 'command'))
-        self.msg_connect((self.tuntap_310_control_led_0, 'ctrl'), (self.qtgui_ledindicator_0, 'state'))
         self.connect((self.blocks_complex_to_mag_0, 0), (self.blocks_divide_xx_0, 0))
         self.connect((self.blocks_complex_to_mag_squared_0, 0), (self.blocks_moving_average_xx_0, 0))
         self.connect((self.blocks_conjugate_cc_0, 0), (self.blocks_multiply_xx_0, 1))
@@ -283,12 +200,9 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_moving_average_xx_0, 0), (self.blocks_divide_xx_0, 1))
         self.connect((self.blocks_moving_average_xx_1, 0), (self.blocks_complex_to_mag_0, 0))
         self.connect((self.blocks_moving_average_xx_1, 0), (self.ieee802_11_sync_short_0, 1))
-        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.foo_packet_pad2_0, 0))
         self.connect((self.blocks_multiply_xx_0, 0), (self.blocks_moving_average_xx_1, 0))
         self.connect((self.blocks_stream_to_vector_0, 0), (self.fft_vxx_0, 0))
-        self.connect((self.blocks_vector_source_x_0, 0), (self.wifi_phy_hier_0, 0))
         self.connect((self.fft_vxx_0, 0), (self.ieee802_11_frame_equalizer_0, 0))
-        self.connect((self.foo_packet_pad2_0, 0), (self.uhd_usrp_sink_0, 0))
         self.connect((self.ieee802_11_frame_equalizer_0, 0), (self.ieee802_11_decode_mac_0, 0))
         self.connect((self.ieee802_11_sync_long_0, 0), (self.blocks_stream_to_vector_0, 0))
         self.connect((self.ieee802_11_sync_short_0, 0), (self.blocks_delay_0, 0))
@@ -296,11 +210,10 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         self.connect((self.uhd_usrp_source_0, 0), (self.blocks_complex_to_mag_squared_0, 0))
         self.connect((self.uhd_usrp_source_0, 0), (self.blocks_delay_0_0, 0))
         self.connect((self.uhd_usrp_source_0, 0), (self.blocks_multiply_xx_0, 0))
-        self.connect((self.wifi_phy_hier_0, 0), (self.blocks_multiply_const_vxx_0, 0))
 
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "USRP_TX_RX_310")
+        self.settings = Qt.QSettings("GNU Radio", "Redis_sink")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -315,25 +228,12 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         self.blocks_moving_average_xx_0.set_length_and_scale((self.window_size  + 16), 1)
         self.blocks_moving_average_xx_1.set_length_and_scale(self.window_size, 1)
 
-    def get_tx_gain(self):
-        return self.tx_gain
-
-    def set_tx_gain(self, tx_gain):
-        self.tx_gain = tx_gain
-        self.uhd_usrp_sink_0.set_gain(self.tx_gain, 0)
-
     def get_sync_length(self):
         return self.sync_length
 
     def set_sync_length(self, sync_length):
         self.sync_length = sync_length
         self.blocks_delay_0.set_dly(int(self.sync_length))
-
-    def get_sdr_addr(self):
-        return self.sdr_addr
-
-    def set_sdr_addr(self, sdr_addr):
-        self.sdr_addr = sdr_addr
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -342,15 +242,7 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self._samp_rate_callback(self.samp_rate)
         self.ieee802_11_frame_equalizer_0.set_bandwidth(self.samp_rate)
-        self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
         self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
-        self.wifi_phy_hier_0.set_bandwidth(self.samp_rate)
-
-    def get_out_buf_size(self):
-        return self.out_buf_size
-
-    def set_out_buf_size(self, out_buf_size):
-        self.out_buf_size = out_buf_size
 
     def get_lo_offset(self):
         return self.lo_offset
@@ -358,7 +250,6 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
     def set_lo_offset(self, lo_offset):
         self.lo_offset = lo_offset
         self._lo_offset_callback(self.lo_offset)
-        self.uhd_usrp_sink_0.set_center_freq(uhd.tune_request(self.freq, rf_freq = self.freq - self.lo_offset, rf_freq_policy=uhd.tune_request.POLICY_MANUAL), 0)
         self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(self.freq, rf_freq = self.freq - self.lo_offset, rf_freq_policy=uhd.tune_request.POLICY_MANUAL), 0)
 
     def get_gain_nor(self):
@@ -375,17 +266,7 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
         self.freq = freq
         self._freq_callback(self.freq)
         self.ieee802_11_frame_equalizer_0.set_frequency(self.freq)
-        self.uhd_usrp_sink_0.set_center_freq(uhd.tune_request(self.freq, rf_freq = self.freq - self.lo_offset, rf_freq_policy=uhd.tune_request.POLICY_MANUAL), 0)
         self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(self.freq, rf_freq = self.freq - self.lo_offset, rf_freq_policy=uhd.tune_request.POLICY_MANUAL), 0)
-        self.wifi_phy_hier_0.set_frequency(self.freq)
-
-    def get_encoding(self):
-        return self.encoding
-
-    def set_encoding(self, encoding):
-        self.encoding = encoding
-        self._encoding_callback(self.encoding)
-        self.wifi_phy_hier_0.set_encoding(self.encoding)
 
     def get_chan_est(self):
         return self.chan_est
@@ -398,7 +279,7 @@ class USRP_TX_RX_310(gr.top_block, Qt.QWidget):
 
 
 
-def main(top_block_cls=USRP_TX_RX_310, options=None):
+def main(top_block_cls=Redis_sink, options=None):
 
     qapp = Qt.QApplication(sys.argv)
 

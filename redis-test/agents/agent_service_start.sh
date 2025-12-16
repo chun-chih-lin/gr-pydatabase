@@ -19,3 +19,5 @@ python3 ./action_agent.py &
 redis-cli -h localhost -p 6379 SET AGENT:TRANS Running
 redis-cli -h localhost -p 6379 SET AGENT:QUEUE Running
 redis-cli -h localhost -p 6379 SET AGENT:ACTION Running
+
+python3 /home/chunchi/Desktop/gr-pydatabase/gr-pydatabase/examples/USRP_TX_RX_310.py $
